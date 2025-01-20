@@ -1,10 +1,10 @@
 server <- function(input, output, session) {
   output$num_sessions <- renderText({
-    paste0(cs_num(filter_on_date(combined_data1, input$date_choice) %>% as.data.frame() %>% summarise(sum(sessions))))
+    paste0(dfeR::comma_sep(filter_on_date(combined_data1, input$date_choice) %>% as.data.frame() %>% summarise(sum(sessions))))
   })
 
   output$num_pageviews <- renderText({
-    paste0(cs_num(filter_on_date(combined_data1, input$date_choice) %>% as.data.frame() %>% summarise(sum(pageviews))))
+    paste0(dfeR::comma_sep(filter_on_date(combined_data1, input$date_choice) %>% as.data.frame() %>% summarise(sum(pageviews))))
   })
 
   output$S <- renderPlot({
@@ -24,11 +24,11 @@ server <- function(input, output, session) {
   })
 
   output$P_num_sessions <- renderText({
-    paste0(cs_num(filter_on_date_pub(pub_agg1, input$P_date_choice, input$publication_choice) %>% as.data.frame() %>% summarise(sum(sessions))))
+    paste0(dfeR::comma_sep(filter_on_date_pub(pub_agg1, input$P_date_choice, input$publication_choice) %>% as.data.frame() %>% summarise(sum(sessions))))
   })
 
   output$P_num_pageviews <- renderText({
-    paste0(cs_num(filter_on_date_pub(pub_agg1, input$P_date_choice, input$publication_choice) %>% as.data.frame() %>% summarise(sum(pageviews))))
+    paste0(dfeR::comma_sep(filter_on_date_pub(pub_agg1, input$P_date_choice, input$publication_choice) %>% as.data.frame() %>% summarise(sum(pageviews))))
   })
 
   output$P_S <- renderPlot({
