@@ -1,14 +1,14 @@
 scrape_ees_page_links <- function() {
-  message("-------------------------------------------------------------------")
+  message("------------------------------------------------------------------")
   message("Scraping")
-  message("-------------------------------------------------------------------")
+  message("------------------------------------------------------------------")
   message("")
 
   message("Starting scraping...")
 
   start <- as.numeric(Sys.time())
 
-  # Scraping functions -----------------------------------------------------------------
+  # Scraping functions --------------------------------------------------------
   scrape_node_href <- function(url, node_type) {
     read_html(url) %>%
       html_nodes(node_type) %>%
@@ -17,7 +17,7 @@ scrape_ees_page_links <- function() {
 
   message("...scraping for service pages...")
 
-  # Get main service page links -------------------------------------------------------
+  # Get main service page links -----------------------------------------------
   homepage_domain <- "https://explore-education-statistics.service.gov.uk"
 
   service_pages <- c(
@@ -27,20 +27,22 @@ scrape_ees_page_links <- function() {
 
   message("...scraping find stats pages for publications...")
 
-  # Get publications ------------------------------------------------------------------
+  # Get publications ----------------------------------------------------------
   find_stats_url <- paste0(homepage_domain, "/find-statistics")
-
 
   # !!!! This is broken, hard coding to 10
   # # Get the number of pages
   # # not all pages are shown straight away so need to work out what exists
   # number_of_pages <- scrape_node_href(find_stats_url, ".govuk-link") %>%
   #   str_subset("page") %>% # includes page 2 twice due to 'next' button
-  #   str_sub(start = -1) %>% # take final character (page numbers) from strings
+  #   str_sub(start = -1) %>% # take out final character (page numbers)
   #   max() # work out number of pages present
 
   # Create URLs for each find stats page
-  find_stats_pages <- sapply(1:10, function(x) paste0("/find-statistics?page=", x))
+  find_stats_pages <- sapply(
+    1:10,
+    function(x) paste0("/find-statistics?page=", x)
+  )
 
   # Extract publication list
   # slug is the publication name part of the url
@@ -48,14 +50,15 @@ scrape_ees_page_links <- function() {
     find_stats_pages,
     function(x) {
       scrape_node_href(paste0(homepage_domain, x), ".govuk-link") %>%
-        str_subset("/find-statistics/") # using this to filter to only publication links
+        # using this to filter to only publication links
+        str_subset("/find-statistics/")
     }
   ) %>%
     unlist()
 
   message("...checking number of publications scraped...")
 
-  # QA against expected publications --------------------------------------------------
+  # QA against expected publications ------------------------------------------
   # Scrape the number of 'results' showing on find stats page
   expected_number <- read_html(find_stats_url) %>%
     html_elements("h2") %>%
@@ -67,32 +70,47 @@ scrape_ees_page_links <- function() {
   difference <- as.numeric(expected_number) - length(scraped_publications)
 
   if (difference != 0) {
-    stop("The scraping of publications from the find statistics page is broken, please investigate before proceeding. Lines 21-52 in scrape_ees.R")
+    stop(
+      paste0(
+        "The scraping of publications from the find statistics page is broken",
+        ", please investigate before proceeding. Lines 21-52 in scrape_ees.R"
+      )
+    )
   } else {
-    message("...number of publications scraped matches expected number, continuing scrape...")
+    message(
+      "...number of publications scraped matches expected number,",
+      " continuing scrape..."
+    )
   }
 
   message("...scraping for methodology pages...")
 
-  # Get methodologies ------------------------------------------------------------------
-  methodology_url <- "https://explore-education-statistics.service.gov.uk/methodology"
+  # Get methodologies ---------------------------------------------------------
+  methodology_url <-
+    "https://explore-education-statistics.service.gov.uk/methodology"
 
   scraped_methodologies <- scrape_node_href(methodology_url, ".govuk-link") %>%
-    str_subset("/methodology/") # using this to filter to only methodology links
+    str_subset("/methodology/") # filter to only methodology links
 
   message("...scraping for remaining pages, may take a few minutes...")
-  # Scrape all potential pages ----------------------------------------------------------
+  # Scrape all potential pages ------------------------------------------------
   # e.g. past releases, data guidance pages
   list_all_potential_pages <-
-    lapply(paste0(homepage_domain, c(service_pages, scraped_publications, scraped_methodologies)), function(x) {
-      paste(x)
-      # scrape_node_href(x, ".govuk-link")
-    }) %>%
+    lapply(
+      paste0(
+        homepage_domain,
+        c(service_pages, scraped_publications, scraped_methodologies)
+      ),
+      function(x) {
+        paste(x)
+        # to add links in scrape_node_href(x, ".govuk-link")
+      }
+    ) %>%
     unlist() %>%
     unique()
 
   # there's a dodgy few...
-  list_all_potential_pages <- rlist::list.filter(list_all_potential_pages, . != "https://explore-education-statistics.service.gov.ukhttps://www.gov.uk/search/research-and-statistics?content_store_document_type=upcoming_statistics&organisations%5B%5D=department-for-education&order=updated-newest")
+  list_all_potential_pages <- rlist::list.filter(list_all_potential_pages, . != "https://explore-education-statistics.service.gov.ukhttps://www.gov.uk/search/research-and-statistics?content_store_document_type=upcoming_statistics&organisations%5B%5D=department-for-education&order=updated-newest") # noline: object_usage_linter
 
   list_all_potential_pages <- rlist::list.filter(list_all_potential_pages, . != "https://explore-education-statistics.service.gov.ukhttps://osr.statisticsauthority.gov.uk/what-we-do/")
 

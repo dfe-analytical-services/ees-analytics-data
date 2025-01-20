@@ -24,7 +24,12 @@ ui <- page_navbar(
         status = "warning",
         tags$b("This app is changing!"),
         tags$p(
-          "Following the move to GA4 (from universal analytics) we've had to revisit all the data underpinning this app, we are working on bringing back the same level of information you've had previously. Let us know what is most important for you being emailing ",
+          paste(
+            "Following the move to GA4 (from universal analytics) we've had to revisit",
+            "all the data underpinning this app, we are working on bringing back the same",
+            "level of information you've had previously. Let us know what is most important",
+            "for you by emailing "
+          ),
           a(
             href = "mailto:explore.statistics@education.gov.uk",
             "explore.statistics@education.gov.uk.",
@@ -39,7 +44,12 @@ ui <- page_navbar(
               "Number of sessions",
               bsicons::bs_icon("question-circle-fill")
             ),
-            "The total number of sessions. This is only applicable to the service as a whole - sessions are only counted for entry pages in the Google Analytics data. Sessions have a 24 hour limit, a session lasting 25 hours would count as two sessions.",
+            paste(
+              "The total number of sessions. This is only applicable to the service as",
+              "a whole - sessions are only counted for entry pages in the Google Analytics",
+              "data. Sessions have a 24 hour limit, a session lasting 25 hours would count",
+              "as two sessions."
+            ),
             placement = "bottom"
           ),
           value = textOutput("num_sessions")
@@ -61,7 +71,12 @@ ui <- page_navbar(
           "Sessions",
           tooltip(
             bs_icon("info-circle"),
-            "The total number of sessions. This is only applicable to the service as a whole - sessions are only counted for entry pages in the Google Analytics data. Sessions have a 24 hour limit, a session lasting 25 hours would count as two sessions."
+            paste(
+              "The total number of sessions. This is only applicable to the service as",
+              "a whole - sessions are only counted for entry pages in the Google Analytics",
+              "data. Sessions have a 24 hour limit, a session lasting 25 hours would count",
+              "as two sessions."
+            )
           )
         ), plotOutput("S")),
         card(card_header(
@@ -100,7 +115,12 @@ ui <- page_navbar(
         status = "warning",
         tags$b("This app is changing!"),
         tags$p(
-          "Following the move to GA4 (from universal analytics) we've had to revisit all the data underpinning this app, we are working on bringing back the same level of information you've had previously. Let us know what is most important for you being emailing ",
+          paste(
+            "Following the move to GA4 (from universal analytics) we've had to revisit all",
+            "the data underpinning this app, we are working on bringing back the same level",
+            "of information you've had previously. Let us know what is most important for you",
+            "by emailing "
+          ),
           a(
             href = "mailto:explore.statistics@education.gov.uk",
             "explore.statistics@education.gov.uk.",
@@ -115,7 +135,12 @@ ui <- page_navbar(
               "Number of sessions",
               bsicons::bs_icon("question-circle-fill")
             ),
-            "The total number of sessions. This is only applicable to the service as a whole - sessions are only counted for entry pages in the Google Analytics data. Sessions have a 24 hour limit, a session lasting 25 hours would count as two sessions.",
+            paste(
+              "The total number of sessions. This is only applicable to the service as a",
+              "whole - sessions are only counted for entry pages in the Google Analytics",
+              "data. Sessions have a 24 hour limit, a session lasting 25 hours would count",
+              "as two sessions."
+            ),
             placement = "bottom"
           ),
           value = textOutput("P_num_sessions")
@@ -137,7 +162,11 @@ ui <- page_navbar(
           "Sessions",
           tooltip(
             bs_icon("info-circle"),
-            "The total number of sessions. This is only applicable to the service as a whole - sessions are only counted for entry pages in the Google Analytics data. Sessions have a 24 hour limit, a session lasting 25 hours would count as two sessions."
+            paste(
+              "The total number of sessions. This is only applicable to the service as a whole",
+              "- sessions are only counted for entry pages in the Google Analytics data. Sessions",
+              "have a 24 hour limit, a session lasting 25 hours would count as two sessions."
+            ),
           )
         ), plotOutput("P_S")),
         card(card_header(
@@ -158,7 +187,12 @@ ui <- page_navbar(
       status = "warning",
       tags$b("This app is changing!"),
       tags$p(
-        "Following the move to GA4 (from universal analytics) we've had to revisit all the data underpinning this app, we are working on bringing back the same level of information you've had previously. Let us know what is most important for you being emailing ",
+        paste(
+          "Following the move to GA4 (from universal analytics) we've had to revisit all",
+          "the data underpinning this app, we are working on bringing back the same level",
+          "of information you've had previously. Let us know what is most important for",
+          "you by emailing "
+        ),
         a(
           href = "mailto:explore.statistics@education.gov.uk",
           "explore.statistics@education.gov.uk.",
@@ -180,7 +214,12 @@ ui <- page_navbar(
       tags$tr(
         tags$td("sessions"),
         tags$td(
-          "The total number of sessions. This is only applicable to the service as a whole - sessions are only counted for entry pages in the Google Analytics data. Sessions have a 24 hour limit, a session lasting 25 hours would count as two sessions."
+          paste(
+            "The total number of sessions. This is only applicable to the service as a whole",
+            " - sessions are only counted for entry pages in the Google Analytics data.",
+            " Sessions have a 24 hour limit, a session lasting 25 hours would count as two",
+            " sessions."
+          )
         )
       )
     )
@@ -196,7 +235,12 @@ ui <- page_navbar(
         status = "warning",
         tags$b("This app is changing!"),
         tags$p(
-          "Following the move to GA4 (from universal analytics) we've had to revisit all the data underpinning this app, we are working on bringing back the same level of information you've had previously. Let us know what is most important for you being emailing ",
+          paste(
+            "Following the move to GA4 (from universal analytics) we've had to revisit all",
+            "the data underpinning this app, we are working on bringing back the same level",
+            "of information you've had previously. Let us know what is most important for",
+            "you by emailing "
+          ),
           a(
             href = "mailto:explore.statistics@education.gov.uk",
             "explore.statistics@education.gov.uk.",
@@ -205,7 +249,10 @@ ui <- page_navbar(
         )
       ),
       p(
-        "We will add out top level show and tell stats and summary stats to support our service KPIs (that rely on GA) here"
+        paste(
+          "We will add out top level show and tell stats and summary stats",
+          "to support our service KPIs (that rely on GA) here"
+        )
       )
     ),
     nav_panel(
@@ -214,7 +261,12 @@ ui <- page_navbar(
         status = "warning",
         tags$b("This app is changing!"),
         tags$p(
-          "Following the move to GA4 (from universal analytics) we've had to revisit all the data underpinning this app, we are working on bringing back the same level of information you've had previously. Let us know what is most important for you being emailing ",
+          paste(
+            "Following the move to GA4 (from universal analytics) we've had to revisit",
+            "all the data underpinning this app, we are working on bringing back the same",
+            "level of information you've had previously. Let us know what is most important",
+            "for you by emailing "
+          ),
           a(
             href = "mailto:explore.statistics@education.gov.uk",
             "explore.statistics@education.gov.uk.",
@@ -230,7 +282,12 @@ ui <- page_navbar(
         status = "warning",
         tags$b("This app is changing!"),
         tags$p(
-          "Following the move to GA4 (from universal analytics) we've had to revisit all the data underpinning this app, we are working on bringing back the same level of information you've had previously. Let us know what is most important for you being emailing ",
+          paste(
+            "Following the move to GA4 (from universal analytics) we've had to revisit all",
+            "the data underpinning this app, we are working on bringing back the same level",
+            "of information you've had previously. Let us know what is most important for you",
+            "by emailing "
+          ),
           a(
             href = "mailto:explore.statistics@education.gov.uk",
             "explore.statistics@education.gov.uk.",
