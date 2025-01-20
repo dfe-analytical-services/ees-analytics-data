@@ -144,45 +144,43 @@ message("...global variables set, loading page data...")
 
 if (Sys.getenv("TEST_MODE") == "") {
   message("...reading from database...")
-  
+
   joined_data1 <- tbl(connection, "ees_analytics_page_data") %>%
     as.data.frame()
-  
+
   message("...page data loaded, loading publication aggregations...")
-  
+
   pub_agg1 <- tbl(connection, "ees_analytics_publication_agg") %>%
     as.data.frame()
-  
+
   message("...publication aggregations loaded, loading service data...")
-  
+
   combined_data1 <- tbl(connection, "ees_analytics_service_data") %>%
     as.data.frame()
-  
-  message("...service data loaded, loading publication spine...")
-  
-  pubs1 <- read_csv("data/pubs.csv", show_col_types = FALSE)
-  
-  message("Complete!")
 
+  message("...service data loaded, loading publication spine...")
+
+  pubs1 <- read_csv("data/pubs.csv", show_col_types = FALSE)
+
+  message("Complete!")
 } else if (Sys.getenv("TEST_MODE") == "TRUE") {
-  
   message("...in test mode...")
-  
+
   joined_data1 <- arrow::read_parquet(
     "tests/testdata/joined_data_0.parquet"
   )
-  
+
   pub_agg1 <- arrow::read_parquet(
     "tests/testdata/publication_aggregation_0.parquet"
   )
   combined_data1 <- arrow::read_parquet(
     "tests/testdata/combined_data_0.parquet"
   )
-  
+
   pubs1 <- arrow::read_parquet(
     "tests/testdata/pub_spine_0.parquet"
   )
-  
+
   message("Complete!")
 } else {
   message("...no data loaded. TEST_MODE = ", Sys.getenv("TEST_MODE"))
