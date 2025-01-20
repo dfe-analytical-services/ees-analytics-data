@@ -40,23 +40,7 @@ shhh(library(odbc))
 # Data vis
 shhh(library(plotly))
 
-message("...library calls done, connecting to database...")
-
-# Database connection =========================================================
-
-config <- config::get("db_connection")
-
-connection <- dbConnect(odbc::odbc(),
-  Driver = config$driver,
-  Server = config$server,
-  Database = config$database,
-  UID = config$uid,
-  PWD = config$pwd,
-  Trusted_Connection = config$trusted,
-  encoding = "UTF-8"
-)
-
-message("...connected to database, setting up global variables...")
+message("...library calls done, setting up global variables...")
 
 # Global variables ============================================================
 link_guidance <- tags$a(
@@ -94,13 +78,25 @@ all_time_date <- "2020-04-03"
 # Custom functions ============================================================
 source("R/utils.R")
 
+message("...global variables set, loading data...")
+
 # Load in data ================================================================
-message("...global variables set, loading page data...")
 
 # File paths are relative to analytics-dashboard/ directory
 
 if (Sys.getenv("TEST_MODE") == "") {
-  message("...reading from database...")
+  config <- config::get("db_connection")
+  connection <- dbConnect(odbc::odbc(),
+    Driver = config$driver,
+    Server = config$server,
+    Database = config$database,
+    UID = config$uid,
+    PWD = config$pwd,
+    Trusted_Connection = config$trusted,
+    encoding = "UTF-8"
+  )
+
+  message("...connected to database...")
 
   joined_data1 <- tbl(connection, "ees_analytics_page_data") %>%
     as.data.frame()
