@@ -1,3 +1,6 @@
+[![lintr](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/lintr.yml/badge.svg)](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/lintr.yml)
+[![Dashboard tests](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/dashboard-tests.yml/badge.svg)](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/dashboard-tests.yml)
+
 # Explore education statistics analytics 
 
 Analysis of analytics data for our explore education statistics (EES) service, pulling in data from a number of sources to disseminate out. Primarily shared with publishers on the service to understand usage of their content, and with the EES service team for assessing service performance.
