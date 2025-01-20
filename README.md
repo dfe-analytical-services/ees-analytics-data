@@ -50,7 +50,7 @@ In general all `.R` files will have a usable outline, so make use of that for na
 
 ### Code styling 
 
-The function `styler::style_dir()` will tidy code according to tidyverse styling using the styler package. Run this regularly as it will run automatically when you commit. This function also helps to test the running of the code and for basic syntax errors such as missing commas and brackets.
+The function `styler::style_dir()` will tidy code according to tidyverse styling using the styler package. Run this regularly as our pre-commit hooks will prevent you committing code that isn't tidied. This function also helps to test the running of the code and for basic syntax errors such as missing commas and brackets.
 
 You should also run `lintr::lint_dir()` regularly as lintr will check all pull requests for the styling of the code, it does not style the code for you like styler, but is slightly stricter and checks for long lines, variables not using snake case, commented out code and undefined objects amongst other things.
 
