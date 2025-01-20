@@ -31,9 +31,9 @@ extends:
      cameron.race@education.gov.uk
      laura.selby@education.gov.uk
      richard.bielby@education.gov.uk
-    strategy:
-      runOnce:
-        preDeploy:
-          steps:
+    jobs:
+      - job: PreStep
+        pool: RSConnect
+        steps:
           - checkout: self
-            path: analytics-dashboard/
+            path: analytics-dashboard

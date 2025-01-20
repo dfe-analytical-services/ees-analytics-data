@@ -1,5 +1,5 @@
 ui <- page_navbar(
-  title = "EES Google Analytics dashboard",
+  title = "Explore education statistics analytics",
   bg = "#0062cc",
   nav_panel(
     title = "Full service",
