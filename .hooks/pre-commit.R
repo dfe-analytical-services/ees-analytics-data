@@ -23,7 +23,7 @@ if (system.file(package = "git2r") == "") {
 if (system.file(package = "rsconnect") != "" & system.file(package = "git2r") != "") {
   if (!any(grepl("manifest.json", git2r::status()))) {
     rsconnect::writeManifest(paste0(getwd(), "/analytics-dashboard"))
-    git2r::add(path = "manifest.json")
+    git2r::add(path = "analytics-dashboard/manifest.json")
   }
   message("...manifest.json rebuilt\n")
 } else {
