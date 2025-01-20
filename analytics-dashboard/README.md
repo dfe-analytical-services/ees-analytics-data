@@ -8,47 +8,40 @@ This is an R Shiny dashboard that is deployed via the DfE POSIT Connect subscrip
 
 ### Data updates
 
-Source data for this dashboard is created and managed in the data-updates folder.
+Source data for this dashboard is created and managed separately in the `data-updates/` folder.
 
 ## Requirements
 
 ### i. Software requirements (for running locally)
 
-- Installation of R Studio 2024.04.2+764 "Chocolate Cosmos" or higher
-
-- Installation of R 4.4.1 or higher
-
+- Installation of R 4.4.2 or higher
 - Installation of RTools44 or higher
 
 ### ii. Programming skills required (for editing or troubleshooting)
 
 - R at an intermediate level, [DfE R learning resources](https://dfe-analytical-services.github.io/analysts-guide/learning-development/r.html)
-
 - Particularly [R Shiny](https://shiny.rstudio.com/)
 
 ### iii. Access requirements
 
 To run the dashboard locally:
-- Access to the databases where we have a permanent store of analytics data
+- Access to the MA_SDT_NS_DATA database
 
 ## Contributing to the dashboard
 
-#### Running locally
+### Running locally
 
 Package control is handled using [renv](https://rstudio.github.io/renv/articles/renv.html) at the top level of the repository.
 
-1. Clone or download the repo. 
+1. Clone or download the repo
+2. Open the R project in R Studio
+3. Run `renv::restore()` to install dependencies
+4. Run `shiny::runApp("analytics-dashboard")` to run the dashboard locally
 
-2. Open the R project in R Studio.
+### Tests
 
-3. Run `renv::restore()` to install dependencies.
+Tests can be run locally using `shinytest2::test_app("analytics-dashboard")`. You should do this regularly to check that the tests are passing against the code you are working on.
 
-4. Run `shiny::runApp("analytics-dashboard")` to run the dashboard locally.
+The tests use data in the `analytics-dashboard/test/testdata/` folder, to regenerate this data look at the `analytics-dashboard/tests/testdata-generator.R` script.
 
-#### Tests
-
-Automated tests have been created using shinytest2 that test the app loads and also give other examples of ways you can use tests. You should edit the tests as you add new features into the app and continue to add and maintain the tests over time.
-
-GitHub Actions provide CI by running the automated tests and checks for code styling on every pull request into the main branch. The yaml files for these workflows can be found in the .github/workflows folder.
-
-You should run `shinytest2::test_app("analytics-dashboard")` regularly to check that the tests are passing against the code you are working on.
+GitHub Actions provide CI by running the automated tests on every pull request into the main branch using the `.github/workflows/dashboard-tests.yml` workflow.
