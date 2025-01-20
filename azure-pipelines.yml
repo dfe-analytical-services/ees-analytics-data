@@ -31,3 +31,9 @@ extends:
      cameron.race@education.gov.uk
      laura.selby@education.gov.uk
      richard.bielby@education.gov.uk
+    strategy:
+      runOnce:
+        preDeploy:
+          steps:
+          - checkout: self
+            path: analytics-dashboard/
