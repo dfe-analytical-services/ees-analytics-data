@@ -6,3 +6,4 @@
 library(git2r)
 library(rsconnect)
 library(styler)
+library(lintr)
