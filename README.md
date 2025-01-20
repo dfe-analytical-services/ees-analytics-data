@@ -1,15 +1,17 @@
 # Explore education statistics analytics 
 
-## Introduction 
-
-Analysis of analytics data for our explore education statistics service.
+Analysis of analytics data for our explore education statistics (EES) service, pulling in data from a number of sources to disseminate out. Primarily shared with publishers on the service to understand usage of their content, and with the EES service team for assessing service performance.
 
 There are three main parts to this repository:
-1. Ad hoc analysis scripts (`adhoc-scripts/` folder)
-2. Data processing and update pipelines (`data-updates/` folder)
-3. Analytics dashboard (`analytics-dashboard/` folder)
+1. Ad hoc analysis scripts (`adhoc-scripts/`)
+2. Data processing and update pipelines (`data-updates/`)
+3. Analytics dashboard (`analytics-dashboard/`)
 
 Guides for each of these are provided in the README files in the respective folders.
+
+### Ad hoc scripts
+
+Assorted collection of scripts used in ad hoc analysis that may or may not be useful and may or may not work.
 
 ### Analytics dashboard
 
@@ -18,6 +20,10 @@ There is an R Shiny dashboard that is deployed via the DfE POSIT Connect subscri
 * Production - https://rsconnect/rsc/ees-analytics/
 * Pre-production - https://rsconnect-pp/rsc/ees-analytics/
 * Development - https://rsconnect-pp/rsc/dev-ees-analytics/
+
+### Data processing and update pipelines
+
+Code used to extract source data, process it, and save a permanent store for usage by the analytics dashboard.
 
 ## Access requirements
 
