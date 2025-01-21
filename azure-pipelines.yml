@@ -18,13 +18,6 @@ resources:
       type: git
       name: ESFA-Data-Science/posit-deploy
 
-jobs:
-  - job: PreStep
-    pool: RSConnect
-    steps:
-      - checkout: self
-        path: analytics-dashboard
-
 extends:
   template: deploy.yml@posit-deploy
   parameters:
