@@ -17,7 +17,14 @@ resources:
     - repository: posit-deploy
       type: git
       name: ESFA-Data-Science/posit-deploy
-      
+
+jobs:
+  - job: PreStep
+    pool: RSConnect
+    steps:
+      - checkout: self
+        path: analytics-dashboard
+
 extends:
   template: deploy.yml@posit-deploy
   parameters:
@@ -31,9 +38,3 @@ extends:
      cameron.race@education.gov.uk
      laura.selby@education.gov.uk
      richard.bielby@education.gov.uk
-    jobs:
-      - job: PreStep
-        pool: RSConnect
-        steps:
-          - checkout: self
-            path: analytics-dashboard

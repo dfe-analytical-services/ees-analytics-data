@@ -12,11 +12,11 @@ There are three main parts to this repository:
 
 Guides for each of these are provided in the README files in the respective folders.
 
-### Ad hoc scripts
+## Ad hoc scripts
 
 Assorted collection of scripts used in ad hoc analysis that may or may not be useful and may or may not work.
 
-### Analytics dashboard
+## Analytics dashboard
 
 There is an R Shiny dashboard that is deployed via the DfE POSIT Connect subscription internally. There are three environments, all accessible to DfE AD:
 
@@ -24,7 +24,7 @@ There is an R Shiny dashboard that is deployed via the DfE POSIT Connect subscri
 * Pre-production - https://rsconnect-pp/rsc/ees-analytics/
 * Development - https://rsconnect-pp/rsc/dev-ees-analytics/
 
-### Data processing and update pipelines
+## Data processing and update pipelines
 
 Code used to extract source data, process it, and save a permanent store for usage by the analytics dashboard.
 
