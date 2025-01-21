@@ -14,7 +14,6 @@
 
 <!-- Put 'x' in the checkboxes that you have completed to help your reviewer -->
 
-- [ ] I have tested these changes locally using `shinytest2::test_app()`
 - [ ] I have ran `styler::style_dir()`
 - [ ] I have ran `lintr::lint_dir()`
 - [ ] I have updated the documentation

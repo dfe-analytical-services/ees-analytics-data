@@ -1,14 +1,12 @@
 [![lintr](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/lintr.yml/badge.svg)](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/lintr.yml)
-[![Dashboard tests](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/dashboard-tests.yml/badge.svg)](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/dashboard-tests.yml)
 
 # Explore education statistics analytics 
 
 Analysis of analytics data for our explore education statistics (EES) service, pulling in data from a number of sources to disseminate out. Primarily shared with publishers on the service to understand usage of their content, and with the EES service team for assessing service performance.
 
-There are three main parts to this repository:
+There are two main parts to this repository:
 1. Ad hoc analysis scripts (`adhoc-scripts/`)
 2. Data processing and update pipelines (`data-updates/`)
-3. Analytics dashboard (`analytics-dashboard/`)
 
 Guides for each of these are provided in the README files in the respective folders.
 
@@ -16,17 +14,13 @@ Guides for each of these are provided in the README files in the respective fold
 
 Assorted collection of scripts used in ad hoc analysis that may or may not be useful and may or may not work.
 
-## Analytics dashboard
-
-There is an R Shiny dashboard that is deployed via the DfE POSIT Connect subscription internally. There are three environments, all accessible to DfE AD:
-
-* Production - https://rsconnect/rsc/ees-analytics/
-* Pre-production - https://rsconnect-pp/rsc/ees-analytics/
-* Development - https://rsconnect-pp/rsc/dev-ees-analytics/
-
 ## Data processing and update pipelines
 
 Code used to extract source data, process it, and save a permanent store for usage by the analytics dashboard.
+
+## Analytics dashboard
+
+There is an R Shiny dashboard that sits on top of this data in a separate GitHub repository - https://github.com/dfe-analytical-services/explore-education-statistics-analytics-dashboard.
 
 ## Access requirements
 
@@ -59,7 +53,7 @@ You should also run `lintr::lint_dir()` regularly as lintr will check all pull r
 
 ### Pre-commit hooks
 
-We have some pre-commit hooks set up to help with code quality and deployment dependencies. These are controlled by the `.hooks/pre-commit.R` file.
+We have some pre-commit hooks set up to help with code quality. These are controlled by the `.hooks/pre-commit.R` file.
 
 ## Contact
 
