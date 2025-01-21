@@ -12,6 +12,7 @@ trigger:
     include:
     - analytics-dashboard/*
     - azure-pipelines.yml
+    - renv.lock
     
 resources:
   repositories:

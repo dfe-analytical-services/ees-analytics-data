@@ -517,13 +517,13 @@
     },
     "curl": {
       "Package": "curl",
-      "Version": "6.1.0",
+      "Version": "6.0.0",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "R"
       ],
-      "Hash": "8dd23d308c751efdf675124aad4bf5d7"
+      "Hash": "ff51697d9205fe715f29e7171e874c6e"
     },
     "cyclocomp": {
       "Package": "cyclocomp",
@@ -1021,7 +1021,7 @@
     },
     "httr2": {
       "Package": "httr2",
-      "Version": "1.1.0",
+      "Version": "1.0.4",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1038,7 +1038,7 @@
         "vctrs",
         "withr"
       ],
-      "Hash": "0f14199bbd820a9fca398f2df40994f1"
+      "Hash": "836e9564fbeca3bb390bb429a53cd401"
     },
     "ini": {
       "Package": "ini",
