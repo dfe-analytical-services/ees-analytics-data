@@ -40,7 +40,7 @@ Package control is handled using [renv](https://rstudio.github.io/renv/articles/
 
 ### Tests
 
-Tests can be run locally using `shinytest2::test_app("analytics-dashboard")`. You should do this regularly to check that the tests are passing against the code you are working on.
+Tests can be run locally by using `shinytest2::test_app("analytics-dashboard")`. You should do this regularly to check that the tests are passing against the code you are working on.
 
 The tests use data in the `analytics-dashboard/test/testdata/` folder, to regenerate this data look at the `analytics-dashboard/tests/testdata-generator.R` script.
 
