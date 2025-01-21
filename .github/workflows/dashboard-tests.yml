@@ -5,9 +5,10 @@ on:
   
   pull_request:
 
-      
 name: Dashboard tests
-
+permissions:
+  contents: read
+  
 jobs:
   automatedTests:
     runs-on: ubuntu-latest
