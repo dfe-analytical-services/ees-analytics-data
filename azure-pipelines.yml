@@ -11,6 +11,7 @@ trigger:
   paths:
     include:
     - analytics-dashboard/*
+    - azure-pipelines.yml
     
 resources:
   repositories:
@@ -24,7 +25,7 @@ extends:
     appName: explore-education-statistics-analytics
     environments:
     - name: Pre-Production
-      appId: none
+      appId: 973
     - name: Production
       appId: none
     approvers: |
