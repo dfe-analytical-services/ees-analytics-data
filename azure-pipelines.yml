@@ -24,9 +24,9 @@ extends:
     appName: explore-education-statistics-analytics
     environments:
     - name: Pre-Production
-      appId: 
+      appId: none
     - name: Production
-      appId: 
+      appId: none
     approvers: |
      cameron.race@education.gov.uk
      laura.selby@education.gov.uk
