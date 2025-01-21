@@ -1,3 +1,6 @@
+[![lintr](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/lintr.yml/badge.svg)](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/lintr.yml)
+[![Dashboard tests](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/dashboard-tests.yml/badge.svg)](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/dashboard-tests.yml)
+
 # Explore education statistics analytics 
 
 Analysis of analytics data for our explore education statistics (EES) service, pulling in data from a number of sources to disseminate out. Primarily shared with publishers on the service to understand usage of their content, and with the EES service team for assessing service performance.
@@ -50,7 +53,7 @@ In general all `.R` files will have a usable outline, so make use of that for na
 
 ### Code styling 
 
-The function `styler::style_dir()` will tidy code according to tidyverse styling using the styler package. Run this regularly as it will run automatically when you commit. This function also helps to test the running of the code and for basic syntax errors such as missing commas and brackets.
+The function `styler::style_dir()` will tidy code according to tidyverse styling using the styler package. Run this regularly as our pre-commit hooks will prevent you committing code that isn't tidied. This function also helps to test the running of the code and for basic syntax errors such as missing commas and brackets.
 
 You should also run `lintr::lint_dir()` regularly as lintr will check all pull requests for the styling of the code, it does not style the code for you like styler, but is slightly stricter and checks for long lines, variables not using snake case, commented out code and undefined objects amongst other things.
 

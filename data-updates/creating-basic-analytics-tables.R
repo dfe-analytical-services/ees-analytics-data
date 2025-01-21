@@ -38,17 +38,17 @@ message("")
 
 # Universal Analytics data from SQL
 
-UA_data <- tbl(connection, "GAapi_by_date") %>%
+ua_data <- tbl(connection, "GAapi_by_date") %>%
   as.data.frame()
 
-UA_data <- UA_data %>% select(c("date", "pageviews", "sessions"))
+ua_data <- ua_data %>% select(c("date", "pageviews", "sessions"))
 
-UA_data <- UA_data %>%
+ua_data <- ua_data %>%
   mutate(data = "Universal analytics")
 
 # GA4 data using google analytics API
 
-GA4_data <- ga_data(
+ga4_data <- ga_data(
   369420610,
   metrics = c("screenPageViews", "sessions"),
   dimensions = c("date"),
@@ -56,46 +56,55 @@ GA4_data <- ga_data(
   limit = -1
 )
 
-GA4_data <- GA4_data %>%
+ga4_data <- ga4_data %>%
   mutate(data = "GA4") %>%
   as.data.frame()
 
-GA4_data <- GA4_data %>% rename(pageviews = screenPageViews) # renamed in move from universal analytics to GA4
+ga4_data <- ga4_data %>% rename(pageviews = screenPageViews) # renamed in move to GA4
 
 # Joining data
 
-combined_data <- rbind(UA_data, GA4_data)
+combined_data <- rbind(ua_data, ga4_data)
 
 sum(combined_data$pageviews)
 sum(combined_data$sessions)
 
 # By page stuff ---------------------------------------------------------------
 ## Universal analytics --------------------------------------------------------
-UA_page_data <- tbl(connection, "GAapi_pagePath") %>%
+ua_page_data <- tbl(connection, "GAapi_pagePath") %>%
   as.data.frame()
 
-UA_page_data <- UA_page_data %>%
+ua_page_data <- ua_page_data %>%
   mutate(data = "Universal analytics")
 
 ## GA4 data -------------------------------------------------------------------
 
-GA4_page_data <- ga_data(
+ga4_page_data <- ga_data(
   369420610,
-  metrics = c("totalUsers", "activeUsers", "screenPageViews", "sessions", "averageSessionDuration"),
+  metrics = c(
+    "totalUsers",
+    "activeUsers",
+    "screenPageViews",
+    "sessions",
+    "averageSessionDuration"
+  ),
   dimensions = c("date", "pagePath"),
   date_range = c("2023-06-02", "2024-10-21"),
   limit = -1
 )
 
-GA4_page_data <- GA4_page_data %>%
+ga4_page_data <- ga4_page_data %>%
   mutate(data = "GA4") %>%
   as.data.frame()
 
-GA4_page_data <- GA4_page_data %>% rename(pageviews = screenPageViews) # renamed in move to GA4
+ga4_page_data <- ga4_page_data %>% rename(pageviews = screenPageViews) # renamed in move to GA4
 
 ## Combine data ---------------------------------------------------------------
 
-combined_page_data <- rbind(select(UA_page_data, c("date", "pagePath", "pageviews", "sessions")), select(GA4_page_data, c("date", "pagePath", "pageviews", "sessions")))
+combined_page_data <- rbind(
+  select(ua_page_data, c("date", "pagePath", "pageviews", "sessions")),
+  select(ga4_page_data, c("date", "pagePath", "pageviews", "sessions"))
+)
 
 sum(combined_page_data$pageviews)
 
@@ -105,15 +114,13 @@ write_csv(combined_page_data, "data/combined_page_data.csv")
 
 ## Publication data -----------------------------------------------------------
 
-# GA will count any url hit which bloats the data with a load of stuff that actually doesn't exist
-# We used to scrape EES and save a list of all expected urls though spotted all sorts of errors in this approach, and it needs adapting now we can supercede publications that need to be fixed, or use an alternative method
+# GA will count any URL hit which bloats the data with a load of stuff that
+# actually doesn't exist
+# We used to scrape EES and save a list of all expected URLs though spotted all
+# sorts of errors in this approach, and it needs adapting now we can supersede
+# publications that need to be fixed, or use an alternative method
 
-# scrape_data <- tbl(connection, "ees_scrape_expected_service_pages") %>%
-#   as.data.frame()
-#
-# nrow(scrape_data) #825
-
-## TEMP FUDGE to pull in old urls (before superceding) ------------------------
+## TEMP FUDGE to pull in old URLs (before superseding) ------------------------
 # - future scrapes should add to this and not overwrite!
 scrape_data <- read_csv("reference-data/scrape_data_fudge.csv")
 nrow(scrape_data) # 907
@@ -128,7 +135,11 @@ nrow(pubs) # 106
 
 ## Joining page data to scrape data (the spine of pages we expect) ------------
 
-combined_page_data1 <- combined_page_data %>% mutate(url = paste0("https://explore-education-statistics.service.gov.uk", pagePath))
+combined_page_data1 <- combined_page_data %>%
+  mutate(url = paste0(
+    "https://explore-education-statistics.service.gov.uk",
+    pagePath
+  ))
 
 nrow(combined_page_data1)
 
@@ -147,7 +158,12 @@ sum(joined_data$pageviews)
 ## Aggregate for publications -------------------------------------------------
 
 pub_agg <- joined_data %>%
-  filter(!str_detect(url, "methodology") & !str_detect(url, "data-tables") & !str_detect(url, "data-guidance") & !str_detect(url, "prerelease-access-list")) %>%
+  filter(
+    !str_detect(url, "methodology") &
+      !str_detect(url, "data-tables") &
+      !str_detect(url, "data-guidance") &
+      !str_detect(url, "prerelease-access-list")
+  ) %>%
   group_by(date, publication) %>%
   summarise("sessions" = sum(sessions), "pageviews" = sum(pageviews))
 
