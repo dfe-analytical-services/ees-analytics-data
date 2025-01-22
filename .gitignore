@@ -4,3 +4,5 @@
 .Ruserdata
 /diagnostics
 README.html
+adhoc-scripts/adhoc-data/*
+*.csv

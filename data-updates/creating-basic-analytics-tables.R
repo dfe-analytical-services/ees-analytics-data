@@ -126,6 +126,8 @@ scrape_data <- read_csv("reference-data/scrape_data_fudge.csv")
 nrow(scrape_data) # 907
 
 # TODO - fix the expected urls list
+# Either scrape it from find stats
+# or connect direct to the EES prod database
 pubs <- select(scrape_data, publication) %>%
   filter(!str_detect(publication, "methodology")) %>%
   filter(!str_detect(publication, "Methodology")) %>%
@@ -171,36 +173,38 @@ nrow(pub_agg)
 
 sum(pub_agg$pageviews)
 
+# Write out parquet files for the app to use temporarily ----------------------
+
 # Write data to database ------------------------------------------------------
-write_csv(pubs, "data/pubs.csv")
-
-dbWriteTable(
-  conn = connection,
-  name = Id(
-    schema  = "dbo",
-    table   = "ees_analytics_service_data"
-  ),
-  value = combined_data,
-  overwrite = TRUE
-)
-
-
-dbWriteTable(
-  conn = connection,
-  name = Id(
-    schema  = "dbo",
-    table   = "ees_analytics_page_data"
-  ),
-  value = joined_data,
-  overwrite = TRUE
-)
-
-dbWriteTable(
-  conn = connection,
-  name = Id(
-    schema  = "dbo",
-    table   = "ees_analytics_publication_agg"
-  ),
-  value = pub_agg,
-  overwrite = TRUE
-)
+# write_csv(pubs, "data/pubs.csv")
+#
+# dbWriteTable(
+#   conn = connection,
+#   name = Id(
+#     schema  = "dbo",
+#     table   = "ees_analytics_service_data"
+#   ),
+#   value = combined_data,
+#   overwrite = TRUE
+# )
+#
+#
+# dbWriteTable(
+#   conn = connection,
+#   name = Id(
+#     schema  = "dbo",
+#     table   = "ees_analytics_page_data"
+#   ),
+#   value = joined_data,
+#   overwrite = TRUE
+# )
+#
+# dbWriteTable(
+#   conn = connection,
+#   name = Id(
+#     schema  = "dbo",
+#     table   = "ees_analytics_publication_agg"
+#   ),
+#   value = pub_agg,
+#   overwrite = TRUE
+# )
