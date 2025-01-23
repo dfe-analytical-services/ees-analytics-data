@@ -110,7 +110,7 @@ sum(combined_page_data$pageviews)
 
 sum(combined_page_data$sessions)
 
-write_csv(combined_page_data, "data/combined_page_data.csv")
+# write_csv(combined_page_data, "data/combined_page_data.csv")
 
 ## Publication data -----------------------------------------------------------
 
@@ -122,7 +122,7 @@ write_csv(combined_page_data, "data/combined_page_data.csv")
 
 ## TEMP FUDGE to pull in old URLs (before superseding) ------------------------
 # - future scrapes should add to this and not overwrite!
-scrape_data <- read_csv("reference-data/scrape_data_fudge.csv")
+scrape_data <- read_csv("data-updates/reference-data/scrape_data_fudge.csv")
 nrow(scrape_data) # 907
 
 # TODO - fix the expected urls list

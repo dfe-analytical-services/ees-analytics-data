@@ -1,0 +1,17 @@
+default:
+  db_connection:
+    driver: "ODBC Driver 17 for SQL Server"
+    server: "T1PRANMSQL\\SQLPROD,60125"
+    database: "MA_SDT_NS_DATA"
+    uid: ""
+    pwd: ""
+    trusted: "Yes"
+
+production:
+  db_connection:
+    driver: "ODBC Driver 17 for SQL Server"
+    server: "T1PRANMSQL.ad.hq.dept,60125"
+    database: "MA_SDT_NS_DATA"
+    uid: !expr Sys.getenv("SDT_UID")
+    pwd: !expr Sys.getenv("SDT_PWD")
+    trusted: "No"
