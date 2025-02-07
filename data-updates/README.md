@@ -2,24 +2,23 @@
 
 Some details here on the updates process, currently it's a manual process ran line by line by Laura
 
-## Requirements
+Ideally a diagram showing the pipelines, workflow schedule and database tables.
 
-### i. Software requirements (for running locally)
+## Access requirements
 
-- Installation of R Studio 2024.04.2+764 "Chocolate Cosmos" or higher
+If running yourself locally, or from your own auth, you will need a Google account with access to:
+- Google Analytics
+- Google Search Console
+- ?
 
-- Installation of R 4.4.2 or higher
+If you're running the code from within databricks, auth is already handled through our service account:
+- shiny-app@ees-analytics.iam.gserviceaccount.com
 
-- Installation of RTools44 or higher
+To write or inspect the data created by the workflows you will need access to:
+- catalog_40_copper_statistics_services
 
-### ii. Programming skills required (for editing or troubleshooting)
+## Notebooks
 
-- R at an intermediate level, [DfE R learning resources](https://dfe-analytical-services.github.io/analysts-guide/learning-development/r.html)
+Notebooks used in the scheduled databricks workflows are stored and tracked in `data-updates/notebooks/`. 
 
-### iii. Access requirements
-
-You will need access to both the source data:
-- TBC
-
-and the end database where write the data to:
-- TBC
+While you can write them from scratch, you can create a notebook in the editor in databricks itself and export the source (.r) file to start you off if easier.
