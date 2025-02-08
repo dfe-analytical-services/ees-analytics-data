@@ -36,7 +36,11 @@ ga_auth(json = "/Volumes/catalog_40_copper_statistics_services/ga_auth/auth-volu
 
 sc <- spark_connect(method = "databricks")
 
-dbExecute(sc, paste("CREATE TABLE IF NOT EXISTS", table_name, "(date DATE, pageviews INT, sessions INT)"))
+dbExecute(sc, paste(
+  "CREATE TABLE IF NOT EXISTS", 
+  table_name, 
+  "(date DATE, pageviews INT, sessions INT, avg_session_duration INT)"
+))
 
 last_date <- sparklyr::sdf_sql(sc, paste("SELECT MAX(date) FROM", table_name)) %>%
   collect() %>%
@@ -66,16 +70,17 @@ previous_data <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", table_name)) %>% c
 
 latest_data <- ga_data(
   369420610,
-  metrics = c("screenPageViews", "sessions"),
+  metrics = c("screenPageViews", "sessions", "averageSessionDuration"),
   dimensions = c("date"),
   date_range = c(changes_since, changes_to),
   limit = -1
 ) |>
-  dplyr::rename("pageviews" = screenPageViews)
+  dplyr::rename("pageviews" = screenPageViews) |>
+  dplyr::rename("avg_session_duration" = averageSessionDuration)
 
 updated_data <- rbind(previous_data, latest_data) |>
  dplyr::arrange(desc(date)) |>
- dplyr::filter(!is.na(date) & !is.na(pageviews) & !is.na(sessions))
+ dplyr::filter(!is.na(date) & !is.na(pageviews) & !is.na(sessions) & !is.na(avg_session_duration))
 
 # COMMAND ----------
 
@@ -125,9 +130,10 @@ dbExecute(sc, paste0("ALTER TABLE ", table_name, "_temp RENAME TO ", table_name)
 
 # Print some final comments on the changes made
 new_dates <- setdiff(as.character(temp_table_data$date), as.character(previous_data$date))
+new_rows <- nrow(as.data.frame(temp_table_data)) - nrow(as.data.frame(previous_data))
 
-print("Update table summary:")
-print(nrow(as.data.frame(temp_table_data)) - nrow(as.data.frame(previous_data)), " new rows added")
-print("New dates: ", new_dates)
-print(nrow(temp_table_data), " rows")
-print("Column names: ", names(temp_table_data))
+message("Updated table summary...")
+message("New rows: ", new_rows)
+message("New dates: ", paste(new_dates, collapse=","))
+message("Total rows: ", nrow(temp_table_data), " rows")
+message("Column names: ", paste(names(temp_table_data), collapse=", "))

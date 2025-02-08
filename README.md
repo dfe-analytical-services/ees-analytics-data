@@ -8,7 +8,7 @@ There are two main parts to this repository:
 1. Ad hoc analysis scripts (`adhoc-scripts/`)
 2. Data processing and update pipelines (`data-updates/`)
 
-Guides for each of these are provided in the README files in the respective folders.
+Guides for each of these are provided in the README files in the respective folders. There is a [high level diagram of the analytics data ingestion and processing](https://lucid.app/lucidchart/97ee2663-4065-425e-92df-dd664d44973d/edit?viewport_loc=-835%2C-412%2C2632%2C1302%2C0_0&invitationId=inv_1289a047-b729-46bc-85ef-425229b540a5).
 
 ## Ad hoc scripts
 
