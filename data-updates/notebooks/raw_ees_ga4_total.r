@@ -23,7 +23,7 @@ library(dplyr)
 library(lubridate)
 library(testthat)
 
-table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_total_pageviews"
+table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_total"
 
 # COMMAND ----------
 
