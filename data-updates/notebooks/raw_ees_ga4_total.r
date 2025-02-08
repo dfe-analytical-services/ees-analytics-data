@@ -11,7 +11,7 @@ install.packages(
     "dplyr",
     "testthat",
     "lubridate"
-    ),
+  ),
   repos = repo_url
 )
 
@@ -39,8 +39,8 @@ ga_auth(json = auth_path)
 sc <- spark_connect(method = "databricks")
 
 dbExecute(sc, paste(
-  "CREATE TABLE IF NOT EXISTS", 
-  table_name, 
+  "CREATE TABLE IF NOT EXISTS",
+  table_name,
   "(date DATE, pageviews INT, sessions INT, avg_session_duration INT)"
 ))
 
@@ -57,7 +57,7 @@ if (is.na(last_date)) {
 reference_dates <- create_dates(Sys.Date() - 2) # doing this to make sure the data is complete when we request it
 
 changes_since <- as.Date(last_date) + 1
-changes_to <- as.Date(reference_dates$latest_date) 
+changes_to <- as.Date(reference_dates$latest_date)
 
 test_that("dates are valid", {
   expect_true(is.Date(changes_since))
@@ -83,8 +83,8 @@ latest_data <- ga_data(
   dplyr::rename("avg_session_duration" = averageSessionDuration)
 
 updated_data <- rbind(previous_data, latest_data) |>
- dplyr::arrange(desc(date)) |>
- dplyr::filter(!is.na(date) & !is.na(pageviews) & !is.na(sessions) & !is.na(avg_session_duration))
+  dplyr::arrange(desc(date)) |>
+  dplyr::filter(!is.na(date) & !is.na(pageviews) & !is.na(sessions) & !is.na(avg_session_duration))
 
 # COMMAND ----------
 

@@ -8,7 +8,7 @@ install.packages(
     "DBI",
     "dplyr",
     "testthat"
-    ),
+  ),
   repos = repo_url
 )
 
@@ -47,8 +47,8 @@ test_that("Data has no missing values", {
   expect_false(any(is.na(alltime_data)))
 
   expect_equal(
-     setdiff(alltime_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
-     length(),
+    setdiff(alltime_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
+      length(),
     0
   )
 })
