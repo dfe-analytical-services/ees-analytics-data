@@ -22,6 +22,8 @@ If running any code yourself locally, or from your own auth, you will need a Goo
 
 ## Notebooks
 
-Notebooks used in the scheduled databricks workflows are stored and tracked in `data-updates/notebooks/`. 
+Notebooks used in the scheduled databricks workflows are stored and tracked in `data-updates/notebooks/`. Common variables and functions for the notebooks are stored in `notebooks/utils.R`.
 
 While you can write them from scratch, you can create a notebook in the editor in databricks itself and export the source (.r) file to start you off if easier.
+
+The `notebooks/ees_last_updated.r` notebook is used to trigger updates of the last updated date table in the database. This is key (literally), as it's used as a cache key in the app to tell it when to re-run data queries.
