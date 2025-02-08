@@ -28,7 +28,7 @@ table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_total
 # COMMAND ----------
 
 # DBTITLE 1,Authenticate
-ga_auth(json = "/Volumes/catalog_40_copper_statistics_services/cam_testing/test-volume/ees-analytics-c5875719e665.json")
+ga_auth(json = "/Volumes/catalog_40_copper_statistics_services/ga_auth/auth-volume/ees-analytics-c5875719e665.json")
 
 # COMMAND ----------
 
