@@ -1,12 +1,26 @@
 # Databricks notebook source
 # DBTITLE 1,Install and load dependencies
-install.packages("googleAnalyticsR")
-install.packages("googleAuthR")
+install.packages(
+  c(
+    "googleAnalyticsR",
+    "googleAuthR",
+    "sparklyr",
+    "DBI",
+    "dplyr",
+    "testthat",
+    "lubridate"
+    ),
+  repos = "https://packagemanager.posit.co/cran/2025-02-07" # freezing to initial date of creation
+)
 
 library(googleAnalyticsR)
 library(googleAuthR)
-library(SparkR)
+
+library(sparklyr)
+library(DBI)
+
 library(dplyr)
+library(lubridate)
 library(testthat)
 
 table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_total_pageviews"
@@ -16,46 +30,59 @@ table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_total
 # DBTITLE 1,Authenticate
 ga_auth(json = "/Volumes/catalog_40_copper_statistics_services/cam_testing/test-volume/ees-analytics-c5875719e665.json")
 
-
 # COMMAND ----------
 
 # DBTITLE 1,Check for latest date from existing data
 
-# Initialize a Spark session
-sparkR.session()
+sc <- spark_connect(method = "databricks")
 
-last_date <- sql(paste("SELECT MAX(date) FROM", table_name))
+dbExecute(sc, paste("CREATE TABLE IF NOT EXISTS", table_name, "(date DATE, pageviews INT, sessions INT)"))
 
-if (is.null(last_date)) {
-  last_date <- "2022-02-02" # before tracking started so gets the whole series that is available
+last_date <- sparklyr::sdf_sql(sc, paste("SELECT MAX(date) FROM", table_name)) %>%
+  collect() %>%
+  pull() %>%
+  as.character()
+
+if (is.na(last_date)) {
+  # Before tracking started so gets the whole series that is available
+  last_date <- "2022-02-02"
 }
 
-update_date <- paste0(Sys.Date() - 3)
+changes_since <- as.Date(last_date) + 1
+changes_to <- as.Date(Sys.Date() - 2) # doing this to make sure the data is complete when we request it
+
+test_that("dates are valid", {
+  expect_true(is.Date(changes_since))
+  expect_true(grepl("\\d{4}-\\d{2}-\\d{2}", as.character(changes_since)))
+  expect_true(is.Date(changes_to))
+  expect_true(grepl("\\d{4}-\\d{2}-\\d{2}", as.character(changes_to)))
+  expect_true(changes_to > changes_since)
+})
 
 # COMMAND ----------
 
 # DBTITLE 1,Pull in data
-previous_data <- sql(paste("SELECT * FROM", table_name))
+previous_data <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", table_name)) %>% collect()
 
 latest_data <- ga_data(
   369420610,
   metrics = c("screenPageViews", "sessions"),
   dimensions = c("date"),
-  date_range = c(last_date, update_date),
+  date_range = c(changes_since, changes_to),
   limit = -1
-)
+) |>
+  dplyr::rename("pageviews" = screenPageViews)
 
 updated_data <- rbind(previous_data, latest_data) |>
-  dplyr::arrange(desc(date))
-
+ dplyr::arrange(desc(date)) |>
+ dplyr::filter(!is.na(date) & !is.na(pageviews) & !is.na(sessions))
 
 # COMMAND ----------
 
 # DBTITLE 1,Quick data integrity checks
 
 test_that("New data has more rows than previous data", {
-  expect_true(nrow(updated_data) >= nrow(previous_data))
-  expect_false(nrow(updated_data) == nrow(previous_data))
+  expect_true(nrow(updated_data) > nrow(previous_data))
 })
 
 test_that("New data has no duplicate rows", {
@@ -63,7 +90,7 @@ test_that("New data has no duplicate rows", {
 })
 
 test_that("Latest date is as expected", {
-  expect_equal(updated_data$date[1], Sys.Date() - 3)
+  expect_equal(updated_data$date[1], changes_to)
 })
 
 test_that("Data has no missing values", {
@@ -71,8 +98,9 @@ test_that("Data has no missing values", {
 
   # 2023-06-22 is the first date we collected data for
   expect_equal(
-    updated_data$date,
-    seq(as.Date("2023-06-22"), Sys.Date() - 3, by = "day")
+    setdiff(updated_data$date, seq(as.Date("2023-06-22"), changes_to, by = "day")) |>
+      length(),
+    0
   )
 })
 
@@ -80,8 +108,26 @@ test_that("Data has no missing values", {
 
 # DBTITLE 1,Write to table
 
-# Create a Spark DataFrame from ga4_data
-ga4_spark_df <- createDataFrame(updated_data)
+ga4_spark_df <- copy_to(sc, updated_data, overwrite = TRUE)
 
-# Save the DataFrame as a table in the metastore
-saveAsTable(updated_data, table_name, mode = "overwrite")
+# Write to temp table while so we can confirm we're good to overwrite data
+spark_write_table(ga4_spark_df, paste0(table_name, "_temp"), mode = "overwrite")
+
+temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_temp")) %>% collect()
+
+test_that("Temp table data matches updated data", {
+  expect_equal(temp_table_data, updated_data)
+})
+
+# Replace the old table with the new one
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", table_name))
+dbExecute(sc, paste0("ALTER TABLE ", table_name, "_temp RENAME TO ", table_name))
+
+# Print some final comments on the changes made
+new_dates <- setdiff(as.character(temp_table_data$date), as.character(previous_data$date))
+
+print("Update table summary:")
+print(nrow(as.data.frame(temp_table_data)) - nrow(as.data.frame(previous_data)), " new rows added")
+print("New dates: ", new_dates)
+print(nrow(temp_table_data), " rows")
+print("Column names: ", names(temp_table_data))
