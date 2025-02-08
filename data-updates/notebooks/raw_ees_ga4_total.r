@@ -132,12 +132,4 @@ test_that("Temp table data matches updated data", {
 dbExecute(sc, paste0("DROP TABLE IF EXISTS ", table_name))
 dbExecute(sc, paste0("ALTER TABLE ", table_name, "_temp RENAME TO ", table_name))
 
-# Print some final comments on the changes made
-new_dates <- setdiff(as.character(temp_table_data$date), as.character(previous_data$date))
-new_rows <- nrow(as.data.frame(temp_table_data)) - nrow(as.data.frame(previous_data))
-
-message("Updated table summary...")
-message("New rows: ", new_rows)
-message("New dates: ", paste(new_dates, collapse=","))
-message("Total rows: ", nrow(temp_table_data), " rows")
-message("Column names: ", paste(names(temp_table_data), collapse=", "))
+print_changes_summary(temp_table_data, previous_data)

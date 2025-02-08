@@ -14,3 +14,14 @@ create_dates <- function(latest_date){
     all_time_date = "2020-04-03"
   )
 }
+
+print_changes_summary <- function(new_table, old_table){
+  new_dates <- setdiff(as.character(new_table$date), as.character(old_table$date))
+  new_rows <- nrow(as.data.frame(new_table)) - nrow(as.data.frame(old_table))
+
+  message("Updated table summary...")
+  message("New rows: ", new_rows)
+  message("New dates: ", paste(new_dates, collapse=","))
+  message("Total rows: ", nrow(new_table), " rows")
+  message("Column names: ", paste(names(new_table), collapse=", "))
+}
