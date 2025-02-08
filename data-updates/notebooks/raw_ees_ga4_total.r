@@ -1,5 +1,7 @@
 # Databricks notebook source
 # DBTITLE 1,Install and load dependencies
+source("utils.R")
+
 install.packages(
   c(
     "googleAnalyticsR",
@@ -10,7 +12,7 @@ install.packages(
     "testthat",
     "lubridate"
     ),
-  repos = "https://packagemanager.posit.co/cran/2025-02-07" # freezing to initial date of creation
+  repos = repo_url
 )
 
 library(googleAnalyticsR)
@@ -28,7 +30,7 @@ table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_total
 # COMMAND ----------
 
 # DBTITLE 1,Authenticate
-ga_auth(json = "/Volumes/catalog_40_copper_statistics_services/ga_auth/auth-volume/ees-analytics-c5875719e665.json")
+ga_auth(json = auth_path)
 
 # COMMAND ----------
 
@@ -52,8 +54,10 @@ if (is.na(last_date)) {
   last_date <- "2022-02-02"
 }
 
+reference_dates <- create_dates(Sys.Date() - 2) # doing this to make sure the data is complete when we request it
+
 changes_since <- as.Date(last_date) + 1
-changes_to <- as.Date(Sys.Date() - 2) # doing this to make sure the data is complete when we request it
+changes_to <- as.Date(reference_dates$latest_date) 
 
 test_that("dates are valid", {
   expect_true(is.Date(changes_since))
@@ -103,7 +107,7 @@ test_that("Data has no missing values", {
 
   # 2023-06-22 is the first date we collected data for
   expect_equal(
-    setdiff(updated_data$date, seq(as.Date("2023-06-22"), changes_to, by = "day")) |>
+    setdiff(updated_data$date, seq(as.Date(reference_dates$ga4_date), changes_to, by = "day")) |>
       length(),
     0
   )
@@ -115,7 +119,7 @@ test_that("Data has no missing values", {
 
 ga4_spark_df <- copy_to(sc, updated_data, overwrite = TRUE)
 
-# Write to temp table while so we can confirm we're good to overwrite data
+# Write to temp table while we confirm we're good to overwrite data
 spark_write_table(ga4_spark_df, paste0(table_name, "_temp"), mode = "overwrite")
 
 temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_temp")) %>% collect()
