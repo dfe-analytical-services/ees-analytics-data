@@ -12,7 +12,7 @@ Guides for each of these are provided in the README files in the respective fold
 
 ## Analytics dashboard
 
-There is an R Shiny dashboard that sits on top of this data in a separate GitHub repository - https://github.com/dfe-analytical-services/explore-education-statistics-analytics-dashboard.
+There is an R Shiny dashboard that sits on top of this data in a separate GitHub repository - https://github.com/dfe-analytical-services/ees-analytics-dashboard.
 
 ## Contributing
 
