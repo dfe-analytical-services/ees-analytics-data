@@ -2,14 +2,15 @@
 # DBTITLE 1,Load dependencies
 source("utils.R")
 
-packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow")
+packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow", "stringr")
 
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
 
 ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
 ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_page"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_page"
+scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_pub_page"
 
 sc <- spark_connect(method = "databricks")
 
@@ -47,8 +48,21 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
+# DBTITLE 1,Filter table down to only publication and release pages
+scraped_publications <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", scrape_table_name)) |> collect()
+slugs <- unique(scraped_publications$slug)
+
+possible_suffixes <- c("/methodology", "/data-guidance", "prerelease-access-list")
+
+filtered_data <- aggregated_data |>
+ filter(str_detect(pagePath, "/find-statistics/")) |>
+ filter(str_detect(pagePath, paste(slugs, collapse = "|"))) |>
+ filter(!str_detect(pagePath, paste(possible_suffixes, collapse = "|")))
+
+# COMMAND ----------
+
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, aggregated_data, overwrite = TRUE)
+updated_spark_df <- copy_to(sc, filtered_data, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
@@ -61,7 +75,7 @@ previous_data <- tryCatch({
 })
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, aggregated_data)
+  expect_equal(temp_table_data, filtered_data)
 })
 
 # Replace the old table with the new one

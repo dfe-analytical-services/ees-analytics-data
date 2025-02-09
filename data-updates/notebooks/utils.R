@@ -56,3 +56,71 @@ print_changes_summary <- function(new_table, old_table) {
     message("Column names: ", paste(names(new_table), collapse = ", "))
   }
 }
+
+# Scraping helpers -------------------------------------------------------------------
+scrape_publications <- function(url) {
+  rvest::read_html(url) |>
+    rvest::html_nodes(".govuk-link") |>
+    rvest::html_attr("href") |>
+    stringr::str_subset("^/find-statistics/") |>
+    stringr::str_remove("^/find-statistics/") |>
+    stringr::str_remove("/.*$")
+}
+
+extract_total_pubs <- function(url) {
+  rvest::read_html(url) |>
+    rvest::html_nodes("h2") |>
+    rvest::html_text() |>
+    stringr::str_subset("results") |>
+    stringr::str_remove(" results") |>
+    as.numeric()
+}
+
+extract_total_pages <- function(url) {
+  page_text <- rvest::read_html(url) |>
+    rvest::html_nodes("p") |>
+    rvest::html_text() |>
+    stringr::str_subset("Page \\d+ of \\d+")
+  
+  if (length(page_text) > 0) {
+    total_pages <- stringr::str_extract(page_text, "(?<=of )\\d+") |>
+      as.numeric()
+    return(total_pages)
+  } else {
+    return(NA)
+  }
+}
+
+get_publication_title <- function(pub_slug) {
+  url <- tryCatch(
+    read_html(
+      paste0(
+        "https://explore-education-statistics.service.gov.uk/find-statistics/",
+        pub_slug
+      )
+    ),
+    error = function(e) {
+      warning(pub_slug, " couldn't be read")
+    }
+  )
+
+  output <- cbind(
+    # return path
+    paste0(
+      "https://explore-education-statistics.service.gov.uk/find-statistics/",
+      pub_slug
+    ),
+    # page heading
+    url %>%
+      html_elements("h1.govuk-heading-xl") %>%
+      html_text2() %>%
+      {
+        if (length(.) == 0) {
+          NA
+        } else {
+          .
+        }
+      }
+  )
+  return(output)
+}
