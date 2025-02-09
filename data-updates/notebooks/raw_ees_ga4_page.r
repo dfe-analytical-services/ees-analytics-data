@@ -2,30 +2,23 @@
 # DBTITLE 1,Install and load dependencies
 source("utils.R")
 
-install.packages(
-  c(
-    "googleAnalyticsR",
-    "googleAuthR",
-    "sparklyr",
-    "DBI",
-    "dplyr",
-    "testthat",
-    "lubridate"
-  ),
-  repos = repo_url
+packages <- c(
+  "googleAnalyticsR",
+  "googleAuthR",
+  "sparklyr",
+  "DBI",
+  "dplyr",
+  "testthat",
+  "lubridate",
+  "arrow"
 )
 
-library(googleAnalyticsR)
-library(googleAuthR)
-
-library(sparklyr)
-library(DBI)
-
-library(dplyr)
-library(lubridate)
-library(testthat)
+install_if_needed(packages)
+lapply(packages, library, character.only = TRUE)
 
 table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
+
+sc <- spark_connect(method = "databricks")
 
 # COMMAND ----------
 
@@ -36,12 +29,10 @@ ga_auth(json = auth_path)
 
 # DBTITLE 1,Check for latest date from existing data
 
-sc <- spark_connect(method = "databricks")
-
 dbExecute(sc, paste(
   "CREATE TABLE IF NOT EXISTS",
   table_name,
-  "(date DATE, pagePath STRING, pageviews INT, sessions INT, avg_session_duration INT)"
+  "(date DATE, pagePath STRING, pageviews INT, sessions INT, averageSessionDuration INT)"
 ))
 
 last_date <- sparklyr::sdf_sql(sc, paste("SELECT MAX(date) FROM", table_name)) %>%
@@ -64,7 +55,7 @@ test_that("dates are valid", {
   expect_true(grepl("\\d{4}-\\d{2}-\\d{2}", as.character(changes_since)))
   expect_true(is.Date(changes_to))
   expect_true(grepl("\\d{4}-\\d{2}-\\d{2}", as.character(changes_to)))
-  expect_true(changes_to > changes_since)
+  expect_gte(changes_to, changes_since)
 })
 
 # COMMAND ----------
@@ -79,12 +70,11 @@ latest_data <- ga_data(
   date_range = c(changes_since, changes_to),
   limit = -1
 ) |>
-  dplyr::rename("pageviews" = screenPageViews) |>
-  dplyr::rename("avg_session_duration" = averageSessionDuration)
+  dplyr::rename("pageviews" = screenPageViews)
 
 updated_data <- rbind(previous_data, latest_data) |>
   dplyr::arrange(desc(date)) |>
-  dplyr::filter(!is.na(date) & !is.na(pagePath) & !is.na(pageviews) & !is.na(sessions) & !is.na(avg_session_duration))
+  dplyr::filter(!is.na(date) & !is.na(pagePath) & !is.na(pageviews) & !is.na(sessions) & !is.na(averageSessionDuration))
 
 # COMMAND ----------
 

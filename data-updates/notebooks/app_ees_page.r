@@ -2,21 +2,10 @@
 # DBTITLE 1,Load dependencies
 source("utils.R")
 
-install.packages(
-  c(
-    "sparklyr",
-    "DBI",
-    "dplyr",
-    "testthat"
-  ),
-  repos = repo_url
-)
+packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow")
 
-library(sparklyr)
-library(DBI)
-
-library(dplyr)
-library(testthat)
+install_if_needed(packages)
+lapply(packages, library, character.only = TRUE)
 
 ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
 ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_page"
@@ -29,7 +18,7 @@ sc <- spark_connect(method = "databricks")
 # DBTITLE 1,Read in and check table integrity
 ua_data <- sparklyr::sdf_sql(sc, paste("SELECT date, pagePath, pageviews, sessions, avgSessionDuration FROM", ua_table_name)) |> 
   collect() |>
-  dplyr::rename("avg_session_duration" = avgSessionDuration)
+  dplyr::rename("averageSessionDuration" = avgSessionDuration)
 ga4_data <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", ga4_table_name)) %>% collect()
 
 dates <- create_dates(max(ga4_data$date))

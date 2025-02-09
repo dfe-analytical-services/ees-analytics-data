@@ -2,14 +2,10 @@
 # DBTITLE 1,Load dependencies
 source("utils.R")
 
-install.packages(
-  c("sparklyr", "DBI", "testthat"), 
-  repos = repo_url
-)
+packages <- c("sparklyr", "DBI", "testthat", "arrow")
 
-library(sparklyr)
-library(DBI)
-library(testthat)
+install_if_needed(packages)
+lapply(packages, library, character.only = TRUE)
 
 table_name <- "catalog_40_copper_statistics_services.analytics_app.ees__last_updated"
 

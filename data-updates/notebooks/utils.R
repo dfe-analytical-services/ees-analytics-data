@@ -1,6 +1,32 @@
+# freezing to initial date of creation for fixing dependency versions
+# focal seems to be the ubuntu that my current cluster is running (runtime 15.4)
+options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/focal/2025-02-09"))
+
+# Function to use pak to install packages that aren't already installed
+install_if_needed <- function(pkg){
+if (!requireNamespace("pak", quietly = TRUE)) {
+  install.packages("pak")
+}
+
+# Handle vectors
+if (length(pkg) == 1) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    pak::pkg_install(pkg, ask = FALSE)
+  } else {
+    message("Skipping install... ", pkg, " already installed")
+  }
+} else {
+  to_install <- pkg[!sapply(pkg, requireNamespace, quietly = TRUE)]
+  if (length(to_install) > 0) {
+    pak::pkg_install(to_install, ask = FALSE)
+  } else {
+    message("Skipping install... all packages already installed")
+  }
+}
+}
+
 # Key variables consistent across notebooks
 auth_path <- "/Volumes/catalog_40_copper_statistics_services/analytics_raw/auth/ees-analytics-c5875719e665.json"
-repo_url <- "https://packagemanager.posit.co/cran/2025-02-07" # freezing to initial date of creation
 
 create_dates <- function(latest_date) {
   list(

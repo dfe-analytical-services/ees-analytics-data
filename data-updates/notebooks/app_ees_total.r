@@ -2,21 +2,10 @@
 # DBTITLE 1,Load dependencies
 source("utils.R")
 
-install.packages(
-  c(
-    "sparklyr",
-    "DBI",
-    "dplyr",
-    "testthat"
-  ),
-  repos = repo_url
-)
+packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow")
 
-library(sparklyr)
-library(DBI)
-
-library(dplyr)
-library(testthat)
+install_if_needed(packages)
+lapply(packages, library, character.only = TRUE)
 
 ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_total"
 ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_total"
