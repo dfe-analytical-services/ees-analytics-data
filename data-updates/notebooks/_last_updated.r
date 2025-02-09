@@ -32,20 +32,20 @@ dbExecute(sc, insert_data_query)
 # COMMAND ----------
 
 # DBTITLE 1,Check the dates match
-max_date_query <- "
-SELECT MAX(date) as max_date
-FROM catalog_40_copper_statistics_services.analytics_app.ees_total
-"
+max_date_query <- function(table){
+  paste0("
+    SELECT MAX(date) as max_date
+    FROM catalog_40_copper_statistics_services.analytics_app.", table
+  )
+} 
 
-latest_data_query <- paste("
-SELECT latest_data
-FROM", table_name, "
-")
+latest_data <- dbGetQuery(sc, paste("SELECT latest_data FROM", table_name, ""))$latest_data
 
-max_date <- dbGetQuery(sc, max_date_query)$max_date
-latest_data <- dbGetQuery(sc, latest_data_query)$latest_data
+max_date_service <- dbGetQuery(sc, max_date_query("ees_service"))$max_date
+max_date_page <- dbGetQuery(sc, max_date_query("ees_page"))$max_date
 
-# Throw an error (and therefore trigger alert) if the dates don't match
+# Throw an error (and therefore trigger alert) if any of the dates don't match
 test_that("Max date matches latest_data", {
-  expect_equal(max_date, latest_data)
+  expect_equal(max_date_service, latest_data)
+  expect_equal(max_date_page, latest_data)
 })

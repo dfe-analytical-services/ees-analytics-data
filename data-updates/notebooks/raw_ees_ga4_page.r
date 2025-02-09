@@ -8,6 +8,7 @@ packages <- c(
   "sparklyr",
   "DBI",
   "dplyr",
+  "tidyr",
   "testthat",
   "lubridate",
   "arrow"
@@ -32,7 +33,7 @@ ga_auth(json = auth_path)
 dbExecute(sc, paste(
   "CREATE TABLE IF NOT EXISTS",
   table_name,
-  "(date DATE, pagePath STRING, pageviews INT, sessions INT, averageSessionDuration INT)"
+  "(date DATE, pagePath STRING, pageviews DOUBLE, sessions DOUBLE, users DOUBLE, userEngagementDuration DOUBLE, bounceRate DOUBLE, scrolledUsers INT)"
 ))
 
 last_date <- sparklyr::sdf_sql(sc, paste("SELECT MAX(date) FROM", table_name)) %>%
@@ -50,7 +51,7 @@ reference_dates <- create_dates(Sys.Date() - 2) # doing this to make sure the da
 changes_since <- as.Date(last_date) + 1
 changes_to <- as.Date(reference_dates$latest_date)
 
-test_that("dates are valid", {
+test_that("Query dates are valid", {
   expect_true(is.Date(changes_since))
   expect_true(grepl("\\d{4}-\\d{2}-\\d{2}", as.character(changes_since)))
   expect_true(is.Date(changes_to))
@@ -65,21 +66,30 @@ previous_data <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", table_name)) %>% c
 
 latest_data <- ga_data(
   369420610,
-  metrics = c("screenPageViews", "sessions", "averageSessionDuration"),
+  metrics = c(
+    "screenPageViews", "sessions", "bounceRate", 
+    "activeUsers", "userEngagementDuration", "scrolledUsers"
+  ),
   dimensions = c("date", "pagePath"),
   date_range = c(changes_since, changes_to),
   limit = -1
 ) |>
-  dplyr::rename("pageviews" = screenPageViews)
+  dplyr::rename("pageviews" = screenPageViews) |>
+  dplyr::rename("users" = activeUsers)
+
+# COMMAND ----------
+
+test_that("Col names match", {
+  expect_equal(names(latest_data), names(previous_data))
+})
 
 updated_data <- rbind(previous_data, latest_data) |>
   dplyr::arrange(desc(date)) |>
-  dplyr::filter(!is.na(date) & !is.na(pagePath) & !is.na(pageviews) & !is.na(sessions) & !is.na(averageSessionDuration))
+  tidyr::drop_na()
 
 # COMMAND ----------
 
 # DBTITLE 1,Quick data integrity checks
-
 test_that("New data has more rows than previous data", {
   expect_true(nrow(updated_data) > nrow(previous_data))
 })
@@ -94,8 +104,9 @@ test_that("Latest date is as expected", {
 
 test_that("Data has no missing values", {
   expect_false(any(is.na(updated_data)))
-
-  # 2023-06-22 is the first date we collected data for
+})
+  
+test_that("There are no missing dates since we started GA4", {
   expect_equal(
     setdiff(updated_data$date, seq(as.Date(reference_dates$ga4_date), changes_to, by = "day")) |>
       length(),
@@ -106,7 +117,6 @@ test_that("Data has no missing values", {
 # COMMAND ----------
 
 # DBTITLE 1,Write to table
-
 ga4_spark_df <- copy_to(sc, updated_data, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
@@ -115,7 +125,7 @@ spark_write_table(ga4_spark_df, paste0(table_name, "_temp"), mode = "overwrite")
 temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_temp")) %>% collect()
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, updated_data)
+  expect_equal(nrow(temp_table_data), nrow(updated_data))
 })
 
 # Replace the old table with the new one

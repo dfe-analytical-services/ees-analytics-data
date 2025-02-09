@@ -8,7 +8,7 @@ if (!requireNamespace("pak", quietly = TRUE)) {
   install.packages("pak")
 }
 
-# Handle vectors
+## Handle vectors
 if (length(pkg) == 1) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     pak::pkg_install(pkg, ask = FALSE)
@@ -25,7 +25,6 @@ if (length(pkg) == 1) {
 }
 }
 
-# Key variables consistent across notebooks
 auth_path <- "/Volumes/catalog_40_copper_statistics_services/analytics_raw/auth/ees-analytics-c5875719e665.json"
 
 create_dates <- function(latest_date) {
@@ -42,12 +41,18 @@ create_dates <- function(latest_date) {
 }
 
 print_changes_summary <- function(new_table, old_table) {
-  new_dates <- setdiff(as.character(new_table$date), as.character(old_table$date))
-  new_rows <- nrow(as.data.frame(new_table)) - nrow(as.data.frame(old_table))
+  if(is.null(old_table)){
+    message("New table summary...")
+    message("Number of rows: ", nrow(new_table))
+    message("Column names: ", paste(names(new_table), collapse = ", "))
+  } else {
+    new_dates <- setdiff(as.character(new_table$date), as.character(old_table$date))
+    new_rows <- nrow(as.data.frame(new_table)) - nrow(as.data.frame(old_table))
 
-  message("Updated table summary...")
-  message("New rows: ", new_rows)
-  message("New dates: ", paste(new_dates, collapse = ","))
-  message("Total rows: ", nrow(new_table), " rows")
-  message("Column names: ", paste(names(new_table), collapse = ", "))
+    message("Updated table summary...")
+    message("New rows: ", new_rows)
+    message("New dates: ", paste(new_dates, collapse = ","))
+    message("Total rows: ", nrow(new_table), " rows")
+    message("Column names: ", paste(names(new_table), collapse = ", "))
+  }
 }

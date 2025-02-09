@@ -9,23 +9,27 @@ lapply(packages, library, character.only = TRUE)
 
 ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
 ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_page"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_page"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service"
 
 sc <- spark_connect(method = "databricks")
 
 # COMMAND ----------
 
 # DBTITLE 1,Read in and check table integrity
-aggregated_data <- sparklyr::sdf_sql(sc, paste("
-  SELECT date, pagePath, SUM(pageviews) AS pageviews, SUM(sessions) AS sessions
-  FROM (
-    SELECT date, pagePath, pageviews, sessions FROM", ua_table_name, "
-    UNION ALL
-    SELECT date, pagePath, pageviews, sessions FROM", ga4_table_name, "
-  ) AS combined_data
-  GROUP BY date, pagePath
-  ORDER BY date DESC
-")) %>% collect()
+aggregated_data <- sparklyr::sdf_sql(
+  sc, paste("
+    SELECT date, 
+           SUM(sessions) AS sessions, 
+           SUM(pageviews) AS pageviews 
+    FROM (
+      SELECT date, sessions, pageviews FROM", ua_table_name, "
+      UNION ALL
+      SELECT date, sessions, pageviews FROM", ga4_table_name, "
+    ) AS combined_data
+    GROUP BY date
+    ORDER BY date DESC
+  ")
+) %>% collect()
 
 test_that("No duplicate rows", {
   expect_true(nrow(aggregated_data) == nrow(dplyr::distinct(aggregated_data)))
@@ -35,7 +39,7 @@ test_that("Data has no missing values", {
   expect_false(any(is.na(aggregated_data)))
 })
 
-dates <- create_dates(max(aggregated_data$date))
+dates <- create_dates(max(ga4_data$date))
 
 test_that("There are no missing dates since we started", {
   expect_equal(
