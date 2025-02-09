@@ -42,12 +42,12 @@ total_pages <- extract_total_pages(find_stats)
 expected_num_pubs <- extract_total_pubs(find_stats)
 find_stats_pages <- paste0(homepage, "/find-statistics?page=", 1:total_pages)
 
-page_slugs <- lapply(find_stats_pages, scrape_publications) |>
+pub_slugs <- lapply(find_stats_pages, scrape_publications) |>
   unlist(use.names = FALSE) |>
   unique()
 
 test_that("We've scraped the expected number", {
-  expect_equal(length(page_slugs), expected_num_pubs)
+  expect_equal(length(pub_slugs), expected_num_pubs)
 })
 
 expected_pages_with_info <- lapply(pub_slugs, get_publication_title)
