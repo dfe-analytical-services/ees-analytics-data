@@ -19,6 +19,9 @@ write_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub
 
 sc <- spark_connect(method = "databricks")
 
+homepage <- "https://explore-education-statistics.service.gov.uk"
+find_stats <- paste0(homepage, "/find-statistics/")
+
 # COMMAND ----------
 
 # DBTITLE 1,Pull in legacy scraped data
@@ -35,8 +38,6 @@ legacy_scrape_data <- sparklyr::sdf_sql(sc, paste0("SELECT DISTINCT url, heading
 # COMMAND ----------
 
 # DBTITLE 1,Scrape for current publications
-homepage <- "https://explore-education-statistics.service.gov.uk"
-find_stats <- paste0(homepage, "/find-statistics/")
 total_pages <- extract_total_pages(find_stats)
 expected_num_pubs <- extract_total_pubs(find_stats)
 find_stats_pages <- paste0(homepage, "/find-statistics?page=", 1:total_pages)
@@ -68,9 +69,6 @@ combined_scrape <- rbind(latest_scrape, legacy_scrape_data) |>
 test_that("Number of rows is more than find stats results", {
   expect_gt(nrow(combined_scrape), expected_num_pubs)
 })
-
-names(combined_scrape)
-str(combined_scrape)
 
 # COMMAND ----------
 
