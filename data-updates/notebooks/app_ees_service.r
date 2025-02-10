@@ -18,9 +18,9 @@ sc <- spark_connect(method = "databricks")
 # DBTITLE 1,Read in and check table integrity
 aggregated_data <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT date, 
-           SUM(sessions) AS sessions, 
-           SUM(pageviews) AS pageviews 
+    SELECT date,
+           SUM(sessions) AS sessions,
+           SUM(pageviews) AS pageviews
     FROM (
       SELECT date, sessions, pageviews FROM", ua_table_name, "
       UNION ALL
@@ -58,11 +58,14 @@ updated_spark_df <- copy_to(sc, aggregated_data, overwrite = TRUE)
 spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
 
 temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name, "_temp")) %>% collect()
-previous_data <- tryCatch({
-  sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
-}, error = function(e) {
-  NULL
-})
+previous_data <- tryCatch(
+  {
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
+  },
+  error = function(e) {
+    NULL
+  }
+)
 
 test_that("Temp table data matches updated data", {
   expect_equal(temp_table_data, aggregated_data)

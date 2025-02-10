@@ -3,26 +3,26 @@
 options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/focal/2025-02-09"))
 
 # Function to use pak to install packages that aren't already installed
-install_if_needed <- function(pkg){
-if (!requireNamespace("pak", quietly = TRUE)) {
-  install.packages("pak")
-}
+install_if_needed <- function(pkg) {
+  if (!requireNamespace("pak", quietly = TRUE)) {
+    install.packages("pak")
+  }
 
-## Handle vectors
-if (length(pkg) == 1) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    pak::pkg_install(pkg, ask = FALSE)
+  ## Handle vectors
+  if (length(pkg) == 1) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      pak::pkg_install(pkg, ask = FALSE)
+    } else {
+      message("Skipping install... ", pkg, " already installed")
+    }
   } else {
-    message("Skipping install... ", pkg, " already installed")
+    to_install <- pkg[!sapply(pkg, requireNamespace, quietly = TRUE)]
+    if (length(to_install) > 0) {
+      pak::pkg_install(to_install, ask = FALSE)
+    } else {
+      message("Skipping install... all packages already installed")
+    }
   }
-} else {
-  to_install <- pkg[!sapply(pkg, requireNamespace, quietly = TRUE)]
-  if (length(to_install) > 0) {
-    pak::pkg_install(to_install, ask = FALSE)
-  } else {
-    message("Skipping install... all packages already installed")
-  }
-}
 }
 
 auth_path <- "/Volumes/catalog_40_copper_statistics_services/analytics_raw/auth/ees-analytics-c5875719e665.json"
@@ -41,7 +41,7 @@ create_dates <- function(latest_date) {
 }
 
 print_changes_summary <- function(new_table, old_table) {
-  if(is.null(old_table)){
+  if (is.null(old_table)) {
     message("New table summary...")
     message("Number of rows: ", nrow(new_table))
     message("Column names: ", paste(names(new_table), collapse = ", "))
@@ -81,7 +81,7 @@ extract_total_pages <- function(url) {
     rvest::html_nodes("p") |>
     rvest::html_text() |>
     stringr::str_subset("Page \\d+ of \\d+")
-  
+
   if (length(page_text) > 0) {
     total_pages <- stringr::str_extract(page_text, "(?<=of )\\d+") |>
       as.numeric()

@@ -33,7 +33,9 @@ ga_auth(json = auth_path)
 dbExecute(sc, paste(
   "CREATE TABLE IF NOT EXISTS",
   table_name,
-  "(date DATE, pagePath STRING, pageviews DOUBLE, sessions DOUBLE, users DOUBLE, userEngagementDuration DOUBLE, bounceRate DOUBLE, scrolledUsers INT)"
+  "(date DATE, pagePath STRING, pageviews DOUBLE, sessions DOUBLE,",
+  "users DOUBLE, userEngagementDuration DOUBLE, bounceRate DOUBLE,",
+  "scrolledUsers INT)"
 ))
 
 last_date <- sparklyr::sdf_sql(sc, paste("SELECT MAX(date) FROM", table_name)) %>%
@@ -58,8 +60,8 @@ test_that("Query dates are valid", {
   expect_true(grepl("\\d{4}-\\d{2}-\\d{2}", as.character(changes_to)))
 
   if (changes_to < changes_since) {
-  # Exit the notebook early
-   dbutils.notebook.exit("Data is up to date, skipping the rest of the notebook")
+    # Exit the notebook early
+    dbutils.notebook.exit("Data is up to date, skipping the rest of the notebook")
   }
 })
 
@@ -71,7 +73,7 @@ previous_data <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", table_name)) %>% c
 latest_data <- ga_data(
   369420610,
   metrics = c(
-    "screenPageViews", "sessions", "bounceRate", 
+    "screenPageViews", "sessions", "bounceRate",
     "activeUsers", "userEngagementDuration", "scrolledUsers"
   ),
   dimensions = c("date", "pagePath"),
@@ -109,7 +111,7 @@ test_that("Latest date is as expected", {
 test_that("Data has no missing values", {
   expect_false(any(is.na(updated_data)))
 })
-  
+
 test_that("There are no missing dates since we started GA4", {
   expect_equal(
     setdiff(updated_data$date, seq(as.Date(reference_dates$ga4_date), changes_to, by = "day")) |>

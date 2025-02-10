@@ -55,9 +55,9 @@ slugs <- unique(scraped_publications$slug)
 possible_suffixes <- c("/methodology", "/data-guidance", "prerelease-access-list")
 
 filtered_data <- aggregated_data |>
- filter(str_detect(pagePath, "/find-statistics/")) |>
- filter(str_detect(pagePath, paste(slugs, collapse = "|"))) |>
- filter(!str_detect(pagePath, paste(possible_suffixes, collapse = "|")))
+  filter(str_detect(pagePath, "/find-statistics/")) |>
+  filter(str_detect(pagePath, paste(slugs, collapse = "|"))) |>
+  filter(!str_detect(pagePath, paste(possible_suffixes, collapse = "|")))
 
 # COMMAND ----------
 
@@ -68,11 +68,14 @@ updated_spark_df <- copy_to(sc, filtered_data, overwrite = TRUE)
 spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
 
 temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name, "_temp")) %>% collect()
-previous_data <- tryCatch({
-  sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
-}, error = function(e) {
-  NULL
-})
+previous_data <- tryCatch(
+  {
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
+  },
+  error = function(e) {
+    NULL
+  }
+)
 
 test_that("Temp table data matches updated data", {
   expect_equal(temp_table_data, filtered_data)
