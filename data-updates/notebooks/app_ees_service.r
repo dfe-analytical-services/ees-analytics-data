@@ -39,7 +39,7 @@ test_that("Data has no missing values", {
   expect_false(any(is.na(aggregated_data)))
 })
 
-dates <- create_dates(max(ga4_data$date))
+dates <- create_dates(max(aggregated_data$date))
 
 test_that("There are no missing dates since we started", {
   expect_equal(
