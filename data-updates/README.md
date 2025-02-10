@@ -1,10 +1,10 @@
 # Explore education statistics analytics - data updates
 
-Analytics data for EES is updated daily using a series of databricks workflows, code and documentation for these workflows is in `notebooks/`.
+Analytics data for EES is updated daily using a series of databricks notebooks in an 'EES analytics update' workflow, code for these workflows is in `notebooks/`.
 
 There is a workflow in databricks that runs a number of jobs, each job is defined in a separate notebook.
 
-The [high level design and database map for the analytics processing](https://lucid.app/lucidchart/97ee2663-4065-425e-92df-dd664d44973d/edit?viewport_loc=-377%2C83%2C2432%2C1203%2CKh6Qkubd_WT.&invitationId=inv_1289a047-b729-46bc-85ef-425229b540a5) can be found on Lucid.
+To understand how all the pieces fit together, look at the [high level design and database map for the data processing flow (LucidSpark)](https://lucid.app/lucidchart/97ee2663-4065-425e-92df-dd664d44973d/edit?viewport_loc=-377%2C83%2C2432%2C1203%2CKh6Qkubd_WT.&invitationId=inv_1289a047-b729-46bc-85ef-425229b540a5).
 
 ## Access requirements
 
@@ -26,4 +26,4 @@ Notebooks used in the scheduled databricks workflows are stored and tracked in `
 
 While you can write them from scratch, you can create a notebook in the editor in databricks itself and export the source (.r) file to start you off if easier.
 
-The `notebooks/ees_last_updated.r` notebook is used to trigger updates of the last updated date table in the database. This is key (literally), as it's used as a cache key in the app to tell it when to re-run data queries.
+The `notebooks/ees_last_updated.r` notebook is used to trigger updates of the last updated date table in the database. This is key (literally), as it's used as a cache key in the app to tell it when to re-run larger data queries.
