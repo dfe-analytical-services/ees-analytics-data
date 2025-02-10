@@ -1,4 +1,4 @@
-[![lintr](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/lintr.yml/badge.svg)](https://github.com/dfe-analytical-services/explore-education-statistics-analytics/actions/workflows/lintr.yml)
+[![lintr](https://github.com/dfe-analytical-services/ees-analytics-data/actions/workflows/lintr.yml/badge.svg)](https://github.com/dfe-analytical-services/ees-analytics-data/actions/workflows/lintr.yml)
 
 # Explore education statistics analytics 
 
