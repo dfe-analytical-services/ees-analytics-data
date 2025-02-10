@@ -94,6 +94,10 @@ if(!is.null(previous_data)){
   test_that("Number of pub / slug combos is less than 10% more than previous", {
     expect_lt(nrow(temp_table_data), nrow(previous_data) * 1.1)
   })
+
+  test_that("Number of pub / slug combos is only going up", {
+    expect_gte(nrow(temp_table_data), nrow(previous_data))
+  })
 }
 
 # Replace the old table with the new one

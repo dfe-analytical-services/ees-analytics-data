@@ -56,7 +56,11 @@ test_that("Query dates are valid", {
   expect_true(grepl("\\d{4}-\\d{2}-\\d{2}", as.character(changes_since)))
   expect_true(is.Date(changes_to))
   expect_true(grepl("\\d{4}-\\d{2}-\\d{2}", as.character(changes_to)))
-  expect_gte(changes_to, changes_since)
+
+  if (changes_to < changes_since) {
+  # Exit the notebook early
+   dbutils.notebook.exit("Data is up to date, skipping the rest of the notebook")
+  }
 })
 
 # COMMAND ----------
