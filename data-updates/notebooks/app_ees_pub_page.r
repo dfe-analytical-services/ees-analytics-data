@@ -50,9 +50,9 @@ test_that("There are no missing dates since we started", {
 
 # DBTITLE 1,Filter table down to only publication and release pages
 scraped_publications <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", scrape_table_name)) |> collect()
-slugs <- unique(scraped_publications$slug)
 
-possible_suffixes <- c("/methodology", "/data-guidance", "prerelease-access-list")
+slugs <- unique(scraped_publications$slug)
+possible_suffixes <- c("/methodology", "/data-guidance", "/prerelease-access-list")
 
 filtered_data <- aggregated_data |>
   filter(str_detect(pagePath, "/find-statistics/")) |>
@@ -61,8 +61,31 @@ filtered_data <- aggregated_data |>
 
 # COMMAND ----------
 
+# DBTITLE 1,Create a slug column and join on publication titles
+joined_data <- filtered_data |>
+  mutate(slug = str_remove(pagePath, "^/find-statistics/")) |>
+  mutate(slug = str_remove(slug, "/.*")) |>
+  mutate(slug = str_remove(slug, "\\.$")) |>
+  left_join(scraped_publications, by = c("slug" = "slug")) |>
+  rename("publication" = title) |>
+  # this drops a raft of dodgy URLs like '/find-statistics/school-workforce-in-england)'
+  filter(!is.na(publication)) |> 
+  select(date, pagePath, publication, pageviews, sessions)
+
+dates <- create_dates(max(aggregated_data$date))
+
+test_that("There are no missing dates since we started", {
+  expect_equal(
+    setdiff(aggregated_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
+      length(),
+    0
+  )
+})
+
+# COMMAND ----------
+
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, filtered_data, overwrite = TRUE)
+updated_spark_df <- copy_to(sc, joined_data, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
@@ -78,7 +101,7 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, filtered_data)
+  expect_equal(temp_table_data, joined_data)
 })
 
 # Replace the old table with the new one
