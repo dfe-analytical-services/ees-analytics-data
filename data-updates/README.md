@@ -20,6 +20,8 @@ If running any code yourself locally, or from your own auth, you will need a Goo
 - Google Analytics
 - Google Search Console
 
+Also note that the renv.lock file in the root is not used for these workflows, instead they install their own dependencies.
+
 ## Notebooks
 
 Notebooks used in the scheduled databricks workflows are stored and tracked in `data-updates/notebooks/`. Common variables and functions for the notebooks are stored in `notebooks/utils.R`.
