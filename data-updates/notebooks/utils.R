@@ -1,6 +1,6 @@
 # focal seems to be the ubuntu that my current cluster is running (runtime 15.4)
 mirror_date <- "" # can use to freeze versions of dependencies
-options(repos = c(CRAN = pasteo("https://packagemanager.posit.co/cran/__linux__/focal/", mirror_date))
+options(repos = c(CRAN = paste0("https://packagemanager.posit.co/cran/__linux__/focal/", mirror_date)))
 
 # Function to use pak to install packages that aren't already installed
 install_if_needed <- function(pkg) {
