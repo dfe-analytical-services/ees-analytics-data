@@ -32,7 +32,7 @@ ga_auth(json = auth_path)
 dbExecute(sc, paste(
   "CREATE TABLE IF NOT EXISTS",
   table_name,
-  "(date DATE, dayOfWeekName STRING, hour INT, landingPage STRING, screenResolution STRING, users INT, averageSessionDuration DOUBLE, engagedSessions INT, screenPageViewsPerSession DOUBLE, sessions INT, userEngagementDuration DOUBLE)"
+  "(date DATE, dayOfWeekName STRING, landingPage STRING, screenResolution STRING, users INT, averageSessionDuration DOUBLE, engagedSessions INT, screenPageViewsPerSession DOUBLE, sessions INT, userEngagementDuration DOUBLE)"
 ))
 
 last_date <- sparklyr::sdf_sql(sc, paste("SELECT MAX(date) FROM", table_name)) %>%
@@ -72,7 +72,7 @@ latest_data <- ga_data(
   metrics = c(
   "activeUsers", "averageSessionDuration", "engagedSessions", "screenPageViewsPerSession", "sessions", "userEngagementDuration"
   ),
-  dimensions = c("date", "dayOfWeekName", "hour", "landingPage", "screenResolution"),
+  dimensions = c("date", "dayOfWeekName", "landingPage", "screenResolution"),
   date_range = c(changes_since, changes_to),
   limit = -1
 ) |>
@@ -82,7 +82,9 @@ latest_data <- ga_data(
 
 # DBTITLE 1,Append new data onto old
 test_that("Col names match", {
-  expect_equal(names(latest_data), names(previous_data))
+  if(length(names(previous_data)) != 0) {
+    expect_equal(names(latest_data), names(previous_data))
+  }
 })
 
 updated_data <- rbind(previous_data, latest_data) |>
