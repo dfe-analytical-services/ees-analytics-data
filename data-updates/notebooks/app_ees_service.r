@@ -7,27 +7,42 @@ packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow")
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
 
-ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
-ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_page"
+ga4_page_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
+ua_page_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_page"
+
+ga4_service_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_session"
+ua_service_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_service"
+
 write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service"
 
 sc <- spark_connect(method = "databricks")
 
 # COMMAND ----------
 
-# DBTITLE 1,Read in and check table integrity
+# MAGIC %md
+# MAGIC While there is a column for sessions in the pages tables, it's important to understand that that column refers to the number of sessions that touched that page. As there can be multiple pages in a session, aggregating that column overcounts the number of sessions, so we need to pull in sessions data from a dedicated sessions table and join that on.
+
+# COMMAND ----------
+
+# DBTITLE 1,Join together and check table integrity
 aggregated_data <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT date,
-           SUM(sessions) AS sessions,
-           SUM(pageviews) AS pageviews
+    SELECT p.date,
+           SUM(s.sessions) AS sessions,
+           SUM(p.pageviews) AS pageviews
     FROM (
-      SELECT date, sessions, pageviews FROM", ua_table_name, "
+      SELECT date, pageviews FROM", ua_page_table_name, "
       UNION ALL
-      SELECT date, sessions, pageviews FROM", ga4_table_name, "
-    ) AS combined_data
-    GROUP BY date
-    ORDER BY date DESC
+      SELECT date, pageviews FROM", ga4_page_table_name, "
+    ) AS p
+    INNER JOIN (
+      SELECT date, sessions FROM ", ua_service_table_name, "
+      UNION ALL
+      SELECT date, sessions FROM ", ga4_service_table_name, "
+    ) AS s
+    ON s.date = p.date
+    GROUP BY p.date
+    ORDER BY p.date DESC
   ")
 ) %>% collect()
 
