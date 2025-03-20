@@ -17,7 +17,7 @@ packages <- c(
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
 
-table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_session"
+table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_service_summary"
 
 sc <- spark_connect(method = "databricks")
 
@@ -32,7 +32,7 @@ ga_auth(json = auth_path)
 dbExecute(sc, paste(
   "CREATE TABLE IF NOT EXISTS",
   table_name,
-  "(date DATE, dayOfWeekName STRING, landingPage STRING, screenResolution STRING, users INT, averageSessionDuration DOUBLE, engagedSessions INT, screenPageViewsPerSession DOUBLE, sessions INT, userEngagementDuration DOUBLE)"
+  "(date DATE, users INT, averageSessionDuration DOUBLE, engagedSessions INT, screenPageViews INT, screenPageViewsPerSession DOUBLE, sessions INT, userEngagementDuration DOUBLE)"
 ))
 
 last_date <- sparklyr::sdf_sql(sc, paste("SELECT MAX(date) FROM", table_name)) %>%
@@ -70,9 +70,9 @@ previous_data <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", table_name)) %>% c
 latest_data <- ga_data(
   369420610,
   metrics = c(
-  "activeUsers", "averageSessionDuration", "engagedSessions", "screenPageViewsPerSession", "sessions", "userEngagementDuration"
+  "activeUsers", "averageSessionDuration", "engagedSessions", "screenPageViews", "screenPageViewsPerSession", "sessions", "userEngagementDuration"
   ),
-  dimensions = c("date", "dayOfWeekName", "landingPage", "screenResolution"),
+  dimensions = c("date"),
   date_range = c(changes_since, changes_to),
   limit = -1
 ) |>

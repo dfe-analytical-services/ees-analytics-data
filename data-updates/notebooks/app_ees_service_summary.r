@@ -7,13 +7,10 @@ packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow")
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
 
-ga4_page_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
-ua_page_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_page"
+ga4_service_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_service_summary"
+ua_service_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_service_summary"
 
-ga4_service_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_session"
-ua_service_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_service"
-
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service_summary"
 
 sc <- spark_connect(method = "databricks")
 
@@ -27,22 +24,10 @@ sc <- spark_connect(method = "databricks")
 # DBTITLE 1,Join together and check table integrity
 aggregated_data <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT p.date,
-           SUM(s.sessions) AS sessions,
-           SUM(p.pageviews) AS pageviews
-    FROM (
-      SELECT date, pageviews FROM", ua_page_table_name, "
+    SELECT date, pageviews as screenPageViews, sessions, avg_session_duration as averageSessionDuration FROM", ua_service_table_name, "
       UNION ALL
-      SELECT date, pageviews FROM", ga4_page_table_name, "
-    ) AS p
-    INNER JOIN (
-      SELECT date, sessions FROM ", ua_service_table_name, "
-      UNION ALL
-      SELECT date, sessions FROM ", ga4_service_table_name, "
-    ) AS s
-    ON s.date = p.date
-    GROUP BY p.date
-    ORDER BY p.date DESC
+    SELECT date, screenPageViews, sessions, averageSessionDuration FROM", ga4_service_table_name, "
+    ORDER BY date DESC;
   ")
 ) %>% collect()
 
