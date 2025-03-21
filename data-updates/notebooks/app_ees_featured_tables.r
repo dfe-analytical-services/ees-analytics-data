@@ -131,7 +131,6 @@ slugs <- unique(scraped_publications$slug)
 
 # DBTITLE 1,Joining publication info
 # Joining publication info onto the publication specific events
-# TO DO: join to methodology pages too
 featured_table_events <- featured_table_events |>
   mutate(slug = str_remove(pagePath, "^/(data-tables|find-statistics)/")) |>
   mutate(slug = str_remove(slug, "/.*")) |>

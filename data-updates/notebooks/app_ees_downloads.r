@@ -220,11 +220,12 @@ slugs <- unique(scraped_publications$slug)
 
 # DBTITLE 1,Joining publication info
 # Joining publication info onto the publication specific events
-# TO DO: join to methodology pages too
 downloads <- downloads |>
-  mutate(slug = str_remove(pagePath, "^/find-statistics/")) |>
+  mutate(slug = str_remove(pagePath, "^/(find-statistics|data-tables|data-catalogue)/")) |>
   mutate(slug = str_remove(slug, "/.*")) |>
-  mutate(slug = str_remove(slug, "\\.$")) |>
+  mutate(slug = str_trim(slug, side = "both")) |>
+  mutate(slug = str_remove_all(slug, "[^a-zA-Z0-9-]")) |>
+  mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title)
 
@@ -237,6 +238,13 @@ test_that("There are no missing dates since we started", {
     0
   )
 })
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from
+# MAGIC catalog_40_copper_statistics_services.analytics_app.ees_downloads
+# MAGIC where publication is null
 
 # COMMAND ----------
 
@@ -283,7 +291,8 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC - **pagePath**: The pagePath the event occured on
 # MAGIC - **page_type**: Type of service page (Release page, Data catalogue, permalink etc)
 # MAGIC - **download_type**: Type of download (csv, ods, all files etc)
-# MAGIC - **publication**: The publication title (relevant for 'Release page' page_types only atm, need to update code to try and pull in for table tool / data catalogue pages too)
+# MAGIC - **publication**: The publication title (relevant for pages that have an associated publication in their pagePath only)
+# MAGIC TO DO: for some events we can take publicaiton details from the eventLabel and for permalinks we may be able to get publication from a scrape or the EES database - not doing anythign with these atm! 
 # MAGIC - **eventLabel**: The info we have for what file was downloaded (this often includes the relevant publication too though is truncated unhelpfully)
 # MAGIC - **eventCount**: The number of downloads of that type on given day
 # MAGIC
