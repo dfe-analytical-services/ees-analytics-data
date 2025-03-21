@@ -81,6 +81,72 @@ test_that("Number of rows is more than find stats results", {
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC The following methodology slugs don't have an exact or ditinct match to a publication slug. To avoid null publication details across analytics tables we want to force the main publication in to each, I went to each manually to find the associated publication and then copied the publication title in for each.
+# MAGIC
+# MAGIC - slug == "schools-pupils-and-their-characteristics" & title == "Schools, pupils and their characteristics"
+# MAGIC - slug == "technical-documentation-2022" & title == "Employer Skills Survey"
+# MAGIC - slug == "pupil-exclusion-statistics" & title == "Suspensions and permanent exclusions in England"
+# MAGIC - slug == "further-education-and-skills-statistics" & title == "Further education and skills"
+# MAGIC - slug == "level-2-and-3-attainment-age-16-to-25" & title == "Level 2 and 3 attainment age 16 to 25"
+# MAGIC - slug == "education-provision-children-under-5-years-of-age" & title == "Education provision: children under 5 years of age"
+# MAGIC - slug == "school-admission-appeals-in-england" & title == "Admission appeals in England"
+# MAGIC - slug == "children-accommodated-in-secure-children-s-homes" & title == "Children accommodated in secure children's homes"
+# MAGIC - slug == "education-children-s-social-care-and-offending-descriptive-statistics-technical-note" & title == "Education, children’s social care and offending: local authority level dashboard"
+# MAGIC - slug == "graduate-labour-market-statistics" & title == "Graduate labour market statistics"
+# MAGIC - slug == "national-tutoring-programme-statistics" & title == "National Tutoring Programme"
+# MAGIC - slug == "participation-in-education-training-and-employment-age-16-to-18" & title == "Participation in education, training and employment age 16 to 18"
+# MAGIC - slug == "progression-to-higher-education-and-training" & title == "Progression to higher education or training"
+# MAGIC - slug == "pupil-absence-statistics" & title == "Pupil absence in schools in England"
+# MAGIC - slug == "school-workforce-in-england-methodolgy" & title == "School workforce in England"
+# MAGIC
+# MAGIC Will add these as rows manually to end of combined_scrape
+
+# COMMAND ----------
+
+new_rows <- data.frame(
+  slug = c(
+    "schools-pupils-and-their-characteristics",
+    "technical-documentation-2022",
+    "pupil-exclusion-statistics",
+    "further-education-and-skills-statistics",
+    "level-2-and-3-attainment-age-16-to-25",
+    "education-provision-children-under-5-years-of-age",
+    "school-admission-appeals-in-england",
+    "children-accommodated-in-secure-children-s-homes",
+    "education-children-s-social-care-and-offending-descriptive-statistics-technical-note",
+    "graduate-labour-market-statistics",
+    "national-tutoring-programme-statistics",
+    "participation-in-education-training-and-employment-age-16-to-18",
+    "progression-to-higher-education-and-training",
+    "pupil-absence-statistics",
+    "school-workforce-in-england-methodolgy"
+  ),
+  title = c(
+    "Schools, pupils and their characteristics",
+    "Employer Skills Survey",
+    "Suspensions and permanent exclusions in England",
+    "Further education and skills",
+    "Level 2 and 3 attainment age 16 to 25",
+    "Education provision: children under 5 years of age",
+    "Admission appeals in England",
+    "Children accommodated in secure children's homes",
+    "Education, children’s social care and offending: local authority level dashboard",
+    "Graduate labour market statistics",
+    "National Tutoring Programme",
+    "Participation in education, training and employment age 16 to 18",
+    "Progression to higher education or training",
+    "Pupil absence in schools in England",
+    "School workforce in England"
+  )
+)
+
+# Append the new rows to the existing data frame
+combined_scrape <- bind_rows(combined_scrape, new_rows) |>
+  distinct()
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC TODO: Move this next section out once we have a lookup table to rely on for renaming
 # MAGIC
 # MAGIC Current known renames that appear as duplicates unless handled (i.e. we have more than one title for a given slug):
@@ -140,7 +206,7 @@ previous_data <- tryCatch(
 )
 
 if (!is.null(previous_data)) {
-  test_that("Number of pub / slug combos is less than 10% more than previous", {
+  test_that("Number of pub / slug combos has not increased by more than 10%", {
     expect_lt(nrow(temp_table_data), nrow(previous_data) * 1.1)
   })
 
@@ -152,3 +218,8 @@ if (!is.null(previous_data)) {
 # Replace the old table with the new one
 dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_table_name))
 dbExecute(sc, paste0("ALTER TABLE ", write_table_name, "_temp RENAME TO ", write_table_name))
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape
