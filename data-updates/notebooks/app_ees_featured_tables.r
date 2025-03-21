@@ -151,7 +151,6 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # selecting just the columns we're interested in storing
-# TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
 featured_table_events <- featured_table_events %>%
 select(date, pagePath, page_type, publication, eventLabel, eventCount)
