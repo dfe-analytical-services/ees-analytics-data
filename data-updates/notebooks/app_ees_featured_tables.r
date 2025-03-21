@@ -28,7 +28,7 @@ sc <- spark_connect(method = "databricks")
 # MAGIC
 # MAGIC **eventCategory** gives the page the evnt occured on, always the Table Tool in this instance
 # MAGIC
-# MAGIC For search events in UA we need: 
+# MAGIC For search events in UA we need:
 # MAGIC
 # MAGIC **eventAction**
 # MAGIC - Clicked to View Featured Table (table tool)
@@ -47,30 +47,30 @@ sc <- spark_connect(method = "databricks")
 
 full_data <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT 
-      date, 
+    SELECT
+      date,
       pagePath,
       eventName,
       eventLabel,
       eventCategory,
       SUM(eventCount) as eventCount
     FROM (
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventAction as eventName,
       eventLabel,
-      eventCategory, 
-      totalEvents as eventCount     
+      eventCategory,
+      totalEvents as eventCount
       FROM ", ua_event_table_name, "
       UNION ALL
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventName,
       eventLabel,
       eventCategory,
-      eventCount 
+      eventCount
       FROM ", ga4_event_table_name, "
     ) AS p
     GROUP BY date, pagePath, eventName, eventLabel, eventCategory
@@ -78,7 +78,7 @@ full_data <- sparklyr::sdf_sql(
   ")
 ) %>% collect()
 
-featured_table_events <- full_data %>% filter(eventName %in% c('Clicked to View Featured Table'))
+featured_table_events <- full_data %>% filter(eventName %in% c("Clicked to View Featured Table"))
 
 
 # COMMAND ----------
@@ -109,7 +109,7 @@ test_that("There are no missing dates since we started", {
 featured_table_events <- featured_table_events %>%
   mutate(page_type = case_when(
     str_detect(eventCategory, "Table Tool") ~ "Table tool",
-    TRUE ~ 'NA'
+    TRUE ~ "NA"
   ))
 
 
@@ -117,8 +117,8 @@ featured_table_events <- featured_table_events %>%
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
-    expect_true(nrow(featured_table_events %>% filter(page_type =='NA')) == 0)
-    })
+  expect_true(nrow(featured_table_events %>% filter(page_type == "NA")) == 0)
+})
 
 # COMMAND ----------
 
@@ -153,7 +153,7 @@ test_that("There are no missing dates since we started", {
 # selecting just the columns we're interested in storing
 
 featured_table_events <- featured_table_events %>%
-select(date, pagePath, page_type, publication, eventLabel, eventCount)
+  select(date, pagePath, page_type, publication, eventLabel, eventCount)
 
 # COMMAND ----------
 
@@ -186,7 +186,7 @@ print_changes_summary(temp_table_data, previous_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following table
 # MAGIC
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
 # MAGIC - **pagePath**: The pagePath the event occured on

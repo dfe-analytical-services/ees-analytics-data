@@ -70,7 +70,7 @@ previous_data <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", table_name)) %>% c
 latest_data <- ga_data(
   369420610,
   metrics = c(
-  "activeUsers", "averageSessionDuration", "engagedSessions", "screenPageViews", "screenPageViewsPerSession", "sessions", "userEngagementDuration"
+    "activeUsers", "averageSessionDuration", "engagedSessions", "screenPageViews", "screenPageViewsPerSession", "sessions", "userEngagementDuration"
   ),
   dimensions = c("date"),
   date_range = c(changes_since, changes_to),
@@ -82,7 +82,7 @@ latest_data <- ga_data(
 
 # DBTITLE 1,Append new data onto old
 test_that("Col names match", {
-  if(length(names(previous_data)) != 0) {
+  if (length(names(previous_data)) != 0) {
     expect_equal(names(latest_data), names(previous_data))
   }
 })

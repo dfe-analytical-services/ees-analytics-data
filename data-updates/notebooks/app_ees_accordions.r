@@ -31,7 +31,7 @@ sc <- spark_connect(method = "databricks")
 # MAGIC
 # MAGIC eventCategory gives the title of the page the event occured on
 # MAGIC
-# MAGIC For accordion opens in UA we need: 
+# MAGIC For accordion opens in UA we need:
 # MAGIC
 # MAGIC **eventAction**
 # MAGIC - Content Accordion Opened
@@ -53,30 +53,30 @@ sc <- spark_connect(method = "databricks")
 
 full_data <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT 
-      date, 
+    SELECT
+      date,
       pagePath,
       eventName,
       eventLabel,
       eventCategory,
       SUM(eventCount) as eventCount
     FROM (
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventAction as eventName,
       eventLabel,
-      eventCategory, 
-      totalEvents as eventCount     
+      eventCategory,
+      totalEvents as eventCount
       FROM ", ua_event_table_name, "
       UNION ALL
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventName,
       eventLabel,
       eventCategory,
-      eventCount 
+      eventCount
       FROM ", ga4_event_table_name, "
     ) AS p
     GROUP BY date, pagePath, eventName, eventLabel, eventCategory
@@ -84,7 +84,7 @@ full_data <- sparklyr::sdf_sql(
   ")
 ) %>% collect()
 
-accordion_events <- full_data %>% filter(eventName %in% c('Content Accordion Opened', 'Accordion Opened', 'Annexes Accordion Opened', 'Data Accordion Opened', 'Publications Accordion Opened', 'Publications+Accordion+Opened'))
+accordion_events <- full_data %>% filter(eventName %in% c("Content Accordion Opened", "Accordion Opened", "Annexes Accordion Opened", "Data Accordion Opened", "Publications Accordion Opened", "Publications+Accordion+Opened"))
 
 # COMMAND ----------
 
@@ -118,24 +118,24 @@ accordion_events <- accordion_events %>%
     str_detect(eventCategory, "Methodology") ~ "Methodology",
     str_detect(eventCategory, "Glossary") ~ "Glossary",
     ## Some manual faffery to address the publications that have too long a title
-    str_detect(eventCategory, "Attendance in Education and Early Years Settings During the Coronavirus \\(COVID-19\\) Pandemic Release ") ~ "Release page",    
+    str_detect(eventCategory, "Attendance in Education and Early Years Settings During the Coronavirus \\(COVID-19\\) Pandemic Release ") ~ "Release page",
     str_detect(eventCategory, "Attendance in Education and Early Years Settings During the Coronavirus \\(COVID-19\\) Pandemic Methodol") ~ "Methodology",
     str_detect(eventCategory, "Outcomes for Children in Need, Including Children Looked After by Local Authorities in England Metho") ~ "Methodology",
-    str_detect(eventCategory, "Outcomes for Children in Need, Including Children Looked After by Local Authorities in England Relea") ~ "Release page", 
+    str_detect(eventCategory, "Outcomes for Children in Need, Including Children Looked After by Local Authorities in England Relea") ~ "Release page",
     ## Service pages that have / did have accordions, might be helpful to look at but not main focus
     str_detect(eventCategory, "Methodologies") ~ "Methodology navigation",
     str_detect(eventCategory, "Find Statistics and Data") ~ "Find stats navigation",
     str_detect(eventCategory, "Find\\+Statistics\\+and\\+Data") ~ "Find stats navigation",
     str_detect(eventCategory, "Download Index Page") ~ "Old data catalogue",
-    TRUE ~ 'NA'
+    TRUE ~ "NA"
   ))
 
 # COMMAND ----------
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
-    expect_true(nrow(accordion_events %>% filter(page_type =='NA')) == 0)
-    })
+  expect_true(nrow(accordion_events %>% filter(page_type == "NA")) == 0)
+})
 
 # COMMAND ----------
 
@@ -174,7 +174,7 @@ test_that("There are no missing dates since we started", {
 # TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
 accordion_events <- accordion_events %>%
-select(date, pagePath, page_type, publication, eventLabel, eventCount)
+  select(date, pagePath, page_type, publication, eventLabel, eventCount)
 
 # COMMAND ----------
 
@@ -207,7 +207,7 @@ print_changes_summary(temp_table_data, previous_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following table
 # MAGIC
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
 # MAGIC - **pagePath**: The pagePath the event occured on

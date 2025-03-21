@@ -69,7 +69,7 @@ joined_data <- filtered_data |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title) |>
   # this drops a raft of dodgy URLs like '/find-statistics/school-workforce-in-england)'
-  filter(!is.na(publication)) |> 
+  filter(!is.na(publication)) |>
   select(date, pagePath, publication, pageviews, sessions)
 
 dates <- create_dates(max(aggregated_data$date))
