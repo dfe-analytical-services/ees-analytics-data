@@ -160,14 +160,15 @@ slugs <- unique(scraped_publications$slug)
 
 # DBTITLE 1,Joining publication info
 # Joining publication info onto the publication specific events
-# TO DO: join to methodology pages too
 search_events <- search_events |>
-  mutate(slug = str_remove(pagePath, "^/find-statistics/")) |>
+  mutate(slug = str_remove(pagePath, "^/(methodology|find-statistics|data-catalogue|data-tables)/")) |>
+  mutate(slug = str_remove(slug, "-methodology")) |>
   mutate(slug = str_remove(slug, "/.*")) |>
+  mutate(slug = str_trim(slug, side = "both")) |>
   mutate(slug = str_remove(slug, "\\.$")) |>
+  mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title)
- ## select(date, pagePath, publication, pageviews, sessions)
 
 dates <- create_dates(max(search_events$date))
 
@@ -185,7 +186,7 @@ test_that("There are no missing dates since we started", {
 # TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
 search_events <- search_events %>%
-select(date, pagePath, page_type, publication, eventLabel, eventCount)
+select(date, pagePath, page_type, publication, eventLabel, eventCount,slug)
 
 # COMMAND ----------
 
@@ -223,7 +224,7 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
 # MAGIC - **pagePath**: The pagePath the event occured on
 # MAGIC - **page_type**: Type of service page (Release page, Data catalogue, glossary etc)
-# MAGIC - **publication**: The publication title (relevant for 'Release page' page_types only atm, need to update code to add to methodology pages too)
+# MAGIC - **publication**: The publication title (relevant for pages that have an associated methodology only)
 # MAGIC - **eventLabel**: The search term used
 # MAGIC - **eventCount**: The number of searches for that term on given day
 # MAGIC
