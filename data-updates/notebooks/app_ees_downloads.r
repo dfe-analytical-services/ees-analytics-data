@@ -28,6 +28,9 @@ sc <- spark_connect(method = "databricks")
 # MAGIC - ODS Download Button Clicked (table tool, permalinks)
 # MAGIC - Data Set File Download - All (data catalogue)
 # MAGIC - Release Page File Downloaded (release ancillary)
+# MAGIC - Release Page All Files, Release: Week 8 (and similar across all pubs) (release pages)
+# MAGIC - Data Catalogue Page Selected Files Downl
+# MAGIC
 # MAGIC
 # MAGIC **eventLabel** gives the dataset title
 # MAGIC
@@ -104,7 +107,7 @@ full_data <- sparklyr::sdf_sql(
 
 downloads <- full_data %>% 
   filter(
-    eventName %in% c('CSV Download Button Clicked', 'Data Set File Download', 'Download All Data Button Clicked', 'ODS Download Button Clicked', 'Data Set File Download - All', 'Release Page File Downloaded', 'Excel Download Button Clicked', 'Data Catalogue Page Selected Files Download', 'Release Page All Files Downloaded') | 
+    eventName %in% c('CSV Download Button Clicked', 'Data Set File Download', 'Download All Data Button Clicked', 'ODS Download Button Clicked', 'Data Set File Download - All', 'Release Page File Downloaded', 'Release Page All Files, Release', 'Data Catalogue Page Selected Files Downl', 'Excel Download Button Clicked', 'Data Catalogue Page Selected Files Download', 'Release Page All Files Downloaded') | 
     str_starts(eventName, "Release Page All Files downloads.title, Release:")
   )
 
@@ -142,6 +145,7 @@ downloads <- downloads %>%
     str_detect(eventCategory, "Data Catalogue") ~ "Data catalogue",
     str_detect(eventCategory, "Data Catalogue - Data Set Page") ~ "Data catalogue",
     str_detect(eventName, "Data Catalogue Page Selected Files Download") ~ "Data catalogue",
+    str_detect(eventName, "Data Catalogue Page Selected Files Downl") ~ "Release page",
     
     str_detect(eventCategory, "Permalink Page") ~ "Permalinks",
 
@@ -190,6 +194,7 @@ downloads <- downloads %>%
 
     str_detect(eventName, "Data Set File Download") ~ "Data catalogue",
     str_detect(eventName, "Data Catalogue Page Selected Files Download") ~ "Data catalogue",
+    str_detect(eventName, "Data Catalogue Page Selected Files Downl") ~ "Data catalogue",
 
     str_detect(eventName, "Release Page File Downloaded") ~ "Ancillary",
 
@@ -222,7 +227,6 @@ downloads <- downloads |>
   mutate(slug = str_remove(slug, "\\.$")) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title)
- ## select(date, pagePath, publication, pageviews, sessions)
 
 dates <- create_dates(max(downloads$date))
 
