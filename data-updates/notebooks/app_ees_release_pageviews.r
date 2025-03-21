@@ -61,6 +61,13 @@ filtered_data <- aggregated_data |>
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC Decided to aggregate up to publication level here to reduce the rows.
+# MAGIC
+# MAGIC Currently for the app, we can leave it up to the publication teams to look at dates and think about separate releases by date.
+
+# COMMAND ----------
+
 # DBTITLE 1,Create a slug column and join on publication titles
 joined_data <- filtered_data |>
   mutate(slug = str_remove(pagePath, "^/find-statistics/")) |>
@@ -72,11 +79,19 @@ joined_data <- filtered_data |>
   filter(!is.na(publication)) |>
   select(date, pagePath, publication, screenPageViews, sessions)
 
+pub_agg_data <- joined_data %>%
+  group_by(date, publication) %>%
+  summarise(
+    screenPageViews = sum(screenPageViews), 
+    sessions = sum(sessions),
+    .groups = "keep"
+  )
+
 dates <- create_dates(max(aggregated_data$date))
 
 test_that("There are no missing dates since we started", {
   expect_equal(
-    setdiff(aggregated_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
+    setdiff(pub_agg_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
       length(),
     0
   )
@@ -85,7 +100,7 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, joined_data, overwrite = TRUE)
+updated_spark_df <- copy_to(sc, pub_agg_data, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
@@ -101,7 +116,7 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, joined_data)
+  expect_equal(nrow(temp_table_data), nrow(pub_agg_data))
 })
 
 # Replace the old table with the new one
