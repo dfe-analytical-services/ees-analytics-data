@@ -40,7 +40,7 @@ max_date_query <- function(table) {
 
 latest_data <- dbGetQuery(sc, paste("SELECT latest_data FROM", table_name, ""))$latest_data
 
-app_tables <- c("ees_pub_page", "ees_service")
+app_tables <- c("ees_release_pageviews", "ees_service_summary")
 
 # Throw an error (and therefore trigger alert) if any of the dates don't match
 for (table in app_tables) {
