@@ -296,11 +296,3 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC - **eventLabel**: The info we have for what file was downloaded (this often includes the relevant publication too though is truncated unhelpfully)
 # MAGIC - **eventCount**: The number of downloads of that type on given day
 # MAGIC
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC select page_type, download_type, sum(eventCount)
-# MAGIC from catalog_40_copper_statistics_services.analytics_app.ees_downloads
-# MAGIC group by page_type, download_type
-# MAGIC order by page_type, download_type
