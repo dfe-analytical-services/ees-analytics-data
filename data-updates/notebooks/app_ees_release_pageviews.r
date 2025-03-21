@@ -18,7 +18,7 @@ sc <- spark_connect(method = "databricks")
 
 # DBTITLE 1,Read in and check table integrity
 aggregated_data <- sparklyr::sdf_sql(sc, paste("
-  SELECT date, pagePath, SUM(pageviews) AS pageviews, SUM(sessions) AS sessions
+  SELECT date, pagePath, SUM(pageviews) AS screenPageViews, SUM(sessions) AS sessions
   FROM (
     SELECT date, pagePath, pageviews, sessions FROM", ua_table_name, "
     UNION ALL
@@ -70,7 +70,7 @@ joined_data <- filtered_data |>
   rename("publication" = title) |>
   # this drops a raft of dodgy URLs like '/find-statistics/school-workforce-in-england)'
   filter(!is.na(publication)) |>
-  select(date, pagePath, publication, pageviews, sessions)
+  select(date, pagePath, publication, screenPageViews, sessions)
 
 dates <- create_dates(max(aggregated_data$date))
 
