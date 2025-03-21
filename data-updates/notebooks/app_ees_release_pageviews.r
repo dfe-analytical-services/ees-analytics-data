@@ -10,7 +10,7 @@ lapply(packages, library, character.only = TRUE)
 ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
 ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_page"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_pub_page"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_release_pageviews"
 
 sc <- spark_connect(method = "databricks")
 

@@ -33,7 +33,7 @@ dbExecute(sc, paste(
   "CREATE TABLE IF NOT EXISTS",
   table_name,
   "(date DATE, pagePath STRING, pageviews DOUBLE, sessions DOUBLE,",
-  "users DOUBLE, userEngagementDuration DOUBLE, bounceRate DOUBLE,",
+  "bounceRate DOUBLE, users DOUBLE, userEngagementDuration DOUBLE,",
   "scrolledUsers INT)"
 ))
 
