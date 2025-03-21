@@ -148,14 +148,15 @@ slugs <- unique(scraped_publications$slug)
 
 # DBTITLE 1,Joining publication info
 # Joining publication info onto the publication specific events
-# TO DO: join to methodology pages too
 accordion_events <- accordion_events |>
-  mutate(slug = str_remove(pagePath, "^/find-statistics/")) |>
+  mutate(slug = str_remove(pagePath, "^/(methodology|find-statistics|data-tables|data-catalogue)/")) |>
+  mutate(slug = str_remove(slug, "-methodology")) |>
   mutate(slug = str_remove(slug, "/.*")) |>
-  mutate(slug = str_remove(slug, "\\.$")) |>
+  mutate(slug = str_trim(slug, side = "both")) |>
+  mutate(slug = str_remove_all(slug, "[^a-zA-Z0-9-]")) |>
+  mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title)
- ## select(date, pagePath, publication, pageviews, sessions)
 
 dates <- create_dates(max(accordion_events$date))
 
@@ -169,7 +170,7 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting jus tthe columns we're interested in storing
+# selecting just the columns we're interested in storing
 # TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
 accordion_events <- accordion_events %>%
@@ -211,7 +212,7 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
 # MAGIC - **pagePath**: The pagePath the event occured on
 # MAGIC - **page_type**: Type of service page (Release page, methoodlogy, glossary etc)
-# MAGIC - **publication**: The publication title (relevant for 'Release page' page_types only atm, need to update code to add to methodology pages too)
+# MAGIC - **publication**: The publication title (relevant for pages that have an associated publication only)
 # MAGIC - **eventLabel**: The accordion title
 # MAGIC - **eventCount**: The number of accordion click events on given day
 # MAGIC
