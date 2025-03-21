@@ -4,5 +4,5 @@ linters: linters_with_defaults(
   )
 exclusions: list(
     "adhoc-scripts/",
-    "data-updates/events-data.R"
+    "data-updates/notebooks/"
   )
