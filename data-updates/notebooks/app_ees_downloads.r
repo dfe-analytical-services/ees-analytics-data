@@ -42,10 +42,10 @@ sc <- spark_connect(method = "databricks")
 # MAGIC - Release Page All Files downloads.title}, (release pages)
 # MAGIC - file_download
 # MAGIC
-# MAGIC NOTE: 
+# MAGIC NOTE:
 # MAGIC We don't seem to be tracking any searches on the table tool
 # MAGIC
-# MAGIC For search events in UA we need: 
+# MAGIC For search events in UA we need:
 # MAGIC
 # MAGIC **eventAction**
 # MAGIC - Release Page File Downloaded (release pages)
@@ -74,30 +74,30 @@ sc <- spark_connect(method = "databricks")
 
 full_data <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT 
-      date, 
+    SELECT
+      date,
       pagePath,
       eventName,
       eventLabel,
       eventCategory,
       SUM(eventCount) as eventCount
     FROM (
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventAction as eventName,
       eventLabel,
-      eventCategory, 
-      totalEvents as eventCount     
+      eventCategory,
+      totalEvents as eventCount
       FROM ", ua_event_table_name, "
       UNION ALL
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventName,
       eventLabel,
       eventCategory,
-      eventCount 
+      eventCount
       FROM ", ga4_event_table_name, "
     ) AS p
     GROUP BY date, pagePath, eventName, eventLabel, eventCategory
@@ -105,10 +105,10 @@ full_data <- sparklyr::sdf_sql(
   ")
 ) %>% collect()
 
-downloads <- full_data %>% 
+downloads <- full_data %>%
   filter(
-    eventName %in% c('CSV Download Button Clicked', 'Data Set File Download', 'Download All Data Button Clicked', 'ODS Download Button Clicked', 'Data Set File Download - All', 'Release Page File Downloaded', 'Release Page All Files, Release', 'Data Catalogue Page Selected Files Downl', 'Excel Download Button Clicked', 'Data Catalogue Page Selected Files Download', 'Release Page All Files Downloaded') | 
-    str_starts(eventName, "Release Page All Files downloads.title, Release:")
+    eventName %in% c("CSV Download Button Clicked", "Data Set File Download", "Download All Data Button Clicked", "ODS Download Button Clicked", "Data Set File Download - All", "Release Page File Downloaded", "Release Page All Files, Release", "Data Catalogue Page Selected Files Downl", "Excel Download Button Clicked", "Data Catalogue Page Selected Files Download", "Release Page All Files Downloaded") |
+      str_starts(eventName, "Release Page All Files downloads.title, Release:")
   )
 
 
@@ -139,16 +139,12 @@ test_that("There are no missing dates since we started", {
 # DBTITLE 1,Adding a page_type column to help distinguish between different types of download
 downloads <- downloads %>%
   mutate(page_type = case_when(
-
     str_detect(eventCategory, "Table Tool") ~ "Table tool",
-    
     str_detect(eventCategory, "Data Catalogue") ~ "Data catalogue",
     str_detect(eventCategory, "Data Catalogue - Data Set Page") ~ "Data catalogue",
     str_detect(eventName, "Data Catalogue Page Selected Files Download") ~ "Data catalogue",
     str_detect(eventName, "Data Catalogue Page Selected Files Downl") ~ "Release page",
-    
     str_detect(eventCategory, "Permalink Page") ~ "Permalinks",
-
     str_detect(eventName, "Release Page File Downloaded") ~ "Release page",
     str_detect(eventName, "Release Page All Files Downloaded") ~ "Release page",
     str_detect(eventCategory, "- Useful Information") ~ "Release page",
@@ -164,41 +160,33 @@ downloads <- downloads %>%
     str_detect(eventCategory, "Looked After Children Aged 16 to 17 in Independent or Semi-Independent Placements Release Page - Use") ~ "Release page",
     str_detect(eventCategory, "Education, Children’s Social Care and Offending: Local Authority Level Dashboard Release Page - Usef") ~ "Release page",
     str_detect(eventCategory, "Children's Social Work Workforce: Attrition, Caseload, and Agency Workforce Release Page - Useful In") ~ "Release page",
-
-    TRUE ~ 'NA'
+    TRUE ~ "NA"
   ))
 
 
 # COMMAND ----------
 
 test_that("There are no events without a page type classification", {
-    expect_true(nrow(downloads %>% filter(page_type =='NA')) == 0)
-    })
+  expect_true(nrow(downloads %>% filter(page_type == "NA")) == 0)
+})
 
 # COMMAND ----------
 
 # DBTITLE 1,Adding a download_type column to help distinguish between different types of download
 downloads <- downloads %>%
   mutate(download_type = case_when(
-
     str_detect(eventName, "ODS Download Button Clicked") ~ "ODS",
-    
     str_detect(eventName, "CSV Download Button Clicked") ~ "CSV",
-
     str_detect(eventName, "Excel Download Button Clicked") ~ "Excel",
-    
     str_detect(eventName, "Download All Data Button Clicked") ~ "All files",
     str_detect(eventName, "Release Page All Files Downloaded") ~ "All files",
     str_starts(eventName, "Release Page All Files downloads.title") ~ "All files",
     str_detect(eventName, "Data Set File Download - All") ~ "All files",
-
     str_detect(eventName, "Data Set File Download") ~ "Data catalogue",
     str_detect(eventName, "Data Catalogue Page Selected Files Download") ~ "Data catalogue",
     str_detect(eventName, "Data Catalogue Page Selected Files Downl") ~ "Data catalogue",
-
     str_detect(eventName, "Release Page File Downloaded") ~ "Ancillary",
-
-    TRUE ~ 'NA'
+    TRUE ~ "NA"
   ))
 
 
@@ -206,8 +194,8 @@ downloads <- downloads %>%
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
-    expect_true(nrow(downloads %>% filter(download_type =='NA')) == 0)
-    })
+  expect_true(nrow(downloads %>% filter(download_type == "NA")) == 0)
+})
 
 # COMMAND ----------
 
@@ -245,7 +233,7 @@ test_that("There are no missing dates since we started", {
 # TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
 downloads <- downloads %>%
-select(date, pagePath, page_type, download_type, publication, eventLabel, eventCount)
+  select(date, pagePath, page_type, download_type, publication, eventLabel, eventCount)
 
 # COMMAND ----------
 
@@ -278,14 +266,14 @@ print_changes_summary(temp_table_data, previous_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following table
 # MAGIC
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
 # MAGIC - **pagePath**: The pagePath the event occured on
 # MAGIC - **page_type**: Type of service page (Release page, Data catalogue, permalink etc)
 # MAGIC - **download_type**: Type of download (csv, ods, all files etc)
 # MAGIC - **publication**: The publication title (relevant for pages that have an associated publication in their pagePath only)
-# MAGIC TO DO: for some events we can take publicaiton details from the eventLabel and for permalinks we may be able to get publication from a scrape or the EES database - not doing anythign with these atm! 
+# MAGIC TO DO: for some events we can take publicaiton details from the eventLabel and for permalinks we may be able to get publication from a scrape or the EES database - not doing anythign with these atm!
 # MAGIC - **eventLabel**: The info we have for what file was downloaded (this often includes the relevant publication too though is truncated unhelpfully)
 # MAGIC - **eventCount**: The number of downloads of that type on given day
 # MAGIC

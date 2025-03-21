@@ -37,10 +37,10 @@ sc <- spark_connect(method = "databricks")
 # MAGIC - Clear Search Filter
 # MAGIC - Clear searchTerm Filter
 # MAGIC
-# MAGIC NOTE: 
+# MAGIC NOTE:
 # MAGIC We don't seem to be tracking any searches on the table tool
 # MAGIC
-# MAGIC For search events in UA we need: 
+# MAGIC For search events in UA we need:
 # MAGIC
 # MAGIC **eventAction**
 # MAGIC - PageSearchForm (used for release and methodology pages -- and /find-stats/ by the looks of things which we might need to check alongside 'Publications Filtered By Search')
@@ -62,30 +62,30 @@ sc <- spark_connect(method = "databricks")
 
 full_data <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT 
-      date, 
+    SELECT
+      date,
       pagePath,
       eventName,
       eventLabel,
       eventCategory,
       SUM(eventCount) as eventCount
     FROM (
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventAction as eventName,
       eventLabel,
-      eventCategory, 
-      totalEvents as eventCount     
+      eventCategory,
+      totalEvents as eventCount
       FROM ", ua_event_table_name, "
       UNION ALL
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventName,
       eventLabel,
       eventCategory,
-      eventCount 
+      eventCount
       FROM ", ga4_event_table_name, "
     ) AS p
     GROUP BY date, pagePath, eventName, eventLabel, eventCategory
@@ -93,7 +93,7 @@ full_data <- sparklyr::sdf_sql(
   ")
 ) %>% collect()
 
-search_events <- full_data %>% filter(eventName %in% c('PageSearchForm', 'Publications Filtered by Search', 'Data Sets Filtered by searchTerm'))
+search_events <- full_data %>% filter(eventName %in% c("PageSearchForm", "Publications Filtered by Search", "Data Sets Filtered by searchTerm"))
 
 
 # COMMAND ----------
@@ -124,21 +124,16 @@ test_that("There are no missing dates since we started", {
 search_events <- search_events %>%
   mutate(page_type = case_when(
     str_detect(eventCategory, "/Find-Statistics/") ~ "Release page",
-    
     str_detect(eventCategory, "Find Statistics and Data") ~ "Find stats",
     str_detect(eventCategory, "/Find-Statistics") ~ "Find stats",
-    
     str_detect(eventCategory, "Glossary") ~ "Glossary",
-
     str_detect(eventCategory, "Data Catalogue") ~ "Data catalogue",
     str_detect(eventCategory, "/Data-Catalogue/") ~ "Data catalogue",
     str_detect(eventCategory, "/Download-Latest-Data") ~ "Data catalogue",
-
     str_detect(eventCategory, "/Methodology/") ~ "Methodology pages",
     str_detect(eventCategory, "/Methodology") ~ "Methodology nav",
-
     str_detect(eventCategory, "/Data-Tables/") ~ "Table tool",
-    TRUE ~ 'NA'
+    TRUE ~ "NA"
   ))
 
 
@@ -146,8 +141,8 @@ search_events <- search_events %>%
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
-    expect_true(nrow(search_events %>% filter(page_type =='NA')) == 0)
-    })
+  expect_true(nrow(search_events %>% filter(page_type == "NA")) == 0)
+})
 
 # COMMAND ----------
 
@@ -186,7 +181,7 @@ test_that("There are no missing dates since we started", {
 # TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
 search_events <- search_events %>%
-select(date, pagePath, page_type, publication, eventLabel, eventCount)
+  select(date, pagePath, page_type, publication, eventLabel, eventCount)
 
 # COMMAND ----------
 
@@ -219,7 +214,7 @@ print_changes_summary(temp_table_data, previous_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following table
 # MAGIC
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
 # MAGIC - **pagePath**: The pagePath the event occured on
