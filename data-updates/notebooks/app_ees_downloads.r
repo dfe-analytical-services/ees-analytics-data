@@ -241,13 +241,6 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC select * from
-# MAGIC catalog_40_copper_statistics_services.analytics_app.ees_downloads
-# MAGIC where publication is null
-
-# COMMAND ----------
-
 # selecting just the columns we're interested in storing
 # TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
