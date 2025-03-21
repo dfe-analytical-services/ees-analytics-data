@@ -186,7 +186,7 @@ test_that("There are no missing dates since we started", {
 # TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
 search_events <- search_events %>%
-select(date, pagePath, page_type, publication, eventLabel, eventCount,slug)
+select(date, pagePath, page_type, publication, eventLabel, eventCount)
 
 # COMMAND ----------
 
@@ -224,7 +224,7 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
 # MAGIC - **pagePath**: The pagePath the event occured on
 # MAGIC - **page_type**: Type of service page (Release page, Data catalogue, glossary etc)
-# MAGIC - **publication**: The publication title (relevant for pages that have an associated methodology only)
+# MAGIC - **publication**: The publication title (relevant for pages that have an associated publication only)
 # MAGIC - **eventLabel**: The search term used
 # MAGIC - **eventCount**: The number of searches for that term on given day
 # MAGIC
