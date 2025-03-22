@@ -18,10 +18,9 @@ sc <- spark_connect(method = "databricks")
 
 # MAGIC %md
 # MAGIC
-# MAGIC For search events in GA4 we need:
+# MAGIC For download events in GA4 we need:
 # MAGIC
 # MAGIC **eventName**
-# MAGIC
 # MAGIC - CSV Download Button Clicked (table tool, permalinks)
 # MAGIC - Data Set File Download (data catalogue)
 # MAGIC - Download All Data Button Clicked (release pages)
@@ -45,7 +44,7 @@ sc <- spark_connect(method = "databricks")
 # MAGIC NOTE:
 # MAGIC We don't seem to be tracking any searches on the table tool
 # MAGIC
-# MAGIC For search events in UA we need:
+# MAGIC For download events in UA we need:
 # MAGIC
 # MAGIC **eventAction**
 # MAGIC - Release Page File Downloaded (release pages)
@@ -215,7 +214,8 @@ downloads <- downloads |>
   mutate(slug = str_remove_all(slug, "[^a-zA-Z0-9-]")) |>
   mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
-  rename("publication" = title)
+  rename("publication" = title) |>
+  mutate(publication = str_to_title(publication))
 
 dates <- create_dates(max(downloads$date))
 
