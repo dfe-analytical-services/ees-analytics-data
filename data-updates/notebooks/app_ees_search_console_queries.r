@@ -3,7 +3,7 @@
 # MAGIC
 # MAGIC # BE AWARE THIS NOTEBOOK MAKES MORE THAN ONE TABLE!
 # MAGIC
-# MAGIC This notebook currently grabs the top 10 searches in various ways, though a future improvement is to do some analysis of the most common words, as this doesn't yet account for all of the similar searches. Worth having a look at the text mining packages for this like [tm](https://tm.r-forge.r-project.org/).
+# MAGIC For the first table this notebook currently grabs the top 10 searches in various ways, though a future improvement is to do some analysis of the most common words, as this doesn't yet account for all of the similar searches. Worth having a look at the text mining packages for this like [tm](https://tm.r-forge.r-project.org/).
 
 # COMMAND ----------
 
@@ -56,7 +56,8 @@ joined_data <- filtered_data |>
   rename("publication" = title) |>
   # this drops a raft of dodgy URLs like '/find-statistics/school-workforce-in-england)'
   filter(!is.na(publication)) |>
-  select(date, query, publication, clicks, impressions)
+  select(date, query, publication, clicks, impressions) |>
+  mutate(publication = str_to_title(publication))
 
 # COMMAND ----------
 
