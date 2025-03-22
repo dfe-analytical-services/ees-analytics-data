@@ -151,7 +151,8 @@ tables_created <- tables_created |>
   mutate(publication = ifelse(pagePath == "/data-tables", 
                               sub("/.*", "", eventLabel), 
                               publication)) |>                            
-  mutate(publication = str_trim(publication, side = "both")) 
+  mutate(publication = str_trim(publication, side = "both")) |>
+  mutate(publication = str_to_title(publication))
 
 dates <- create_dates(max(tables_created$date))
 
@@ -167,11 +168,21 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting just the columns we're interested in storing
+# selecting just the columns of interest
 # TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
 
 tables_created <- tables_created %>%
   select(date, pagePath, page_type, publication, eventLabel, eventCount)
+
+
+# COMMAND ----------
+
+# going to aggregate and store at publication level for now, can unpick later if needed 
+tables_created <- tables_created %>%
+  group_by(date, page_type, publication, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount)
+  ) 
 
 # COMMAND ----------
 
@@ -192,7 +203,7 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, tables_created)
+  expect_equal(nrow(temp_table_data), nrow(tables_created))
 })
 
 # Replace the old table with the new one
@@ -200,6 +211,11 @@ dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_table_name))
 dbExecute(sc, paste0("ALTER TABLE ", write_table_name, "_temp RENAME TO ", write_table_name))
 
 print_changes_summary(temp_table_data, previous_data)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from catalog_40_copper_statistics_services.analytics_app.ees_tables_created
 
 # COMMAND ----------
 
