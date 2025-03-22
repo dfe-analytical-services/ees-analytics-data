@@ -10,7 +10,7 @@ lapply(packages, library, character.only = TRUE)
 ga4_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_events"
 ua_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_events"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_featured_tables"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_session_starts"
 
 sc <- spark_connect(method = "databricks")
 
@@ -18,85 +18,54 @@ sc <- spark_connect(method = "databricks")
 
 # MAGIC %md
 # MAGIC
-# MAGIC For featured table events in GA4 we need:
+# MAGIC The session_start event was new for GA4. 
 # MAGIC
 # MAGIC **eventName**
 # MAGIC
-# MAGIC - Clicked to View Featured Table (table tool)
+# MAGIC - session_start (logs the pagePath where sessions began)
 # MAGIC
-# MAGIC **eventLabel** gives the featured table title
+# MAGIC **eventLabel** in not set so not needed
 # MAGIC
-# MAGIC **eventCategory** gives the page the evnt occured on, always the Table Tool in this instance
+# MAGIC **eventCategory** in not set so not needed
 # MAGIC
-# MAGIC For featured table events in UA we need:
-# MAGIC
-# MAGIC **eventAction**
-# MAGIC - Clicked to View Featured Table (table tool)
-# MAGIC
-# MAGIC **eventLabel** gives the featured table title
-# MAGIC
-# MAGIC **eventCategory** gives the page the evnt occured on, always the Table Tool in this instance
-# MAGIC
+# MAGIC NOTE:
+# MAGIC We don't have an equivalent event for universal analytics. 
 # MAGIC
 
 # COMMAND ----------
 
 # DBTITLE 1,Join the tables together and filter to just accordion relevant events
-
-## I've done this with a group by because otherwise the tests would fail because of duplicates. This could mean I'm just double counting on the day overlap between the two tables - but would need to investigate more to find out.
-
-full_data <- sparklyr::sdf_sql(
+session_starts <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT
-      date,
+      SELECT 
+      date, 
       pagePath,
       eventName,
-      eventLabel,
-      eventCategory,
-      SUM(eventCount) as eventCount
-    FROM (
-      SELECT
-      date,
-      pagePath,
-      eventAction as eventName,
-      eventLabel,
-      eventCategory,
-      totalEvents as eventCount
-      FROM ", ua_event_table_name, "
-      UNION ALL
-      SELECT
-      date,
-      pagePath,
-      eventName,
-      eventLabel,
-      eventCategory,
-      eventCount
+      sum(eventCount) as eventCount
       FROM ", ga4_event_table_name, "
-    ) AS p
-    GROUP BY date, pagePath, eventName, eventLabel, eventCategory
+    WHERE eventName = 'session_start'
+    GROUP BY date, pagePath, eventName
     ORDER BY date DESC
   ")
 ) %>% collect()
-
-featured_table_events <- full_data %>% filter(eventName %in% c("Clicked to View Featured Table"))
 
 
 # COMMAND ----------
 
 # DBTITLE 0,Join together and check table integrity
 test_that("No duplicate rows", {
-  expect_true(nrow(featured_table_events) == nrow(dplyr::distinct(featured_table_events)))
+  expect_true(nrow(session_starts) == nrow(dplyr::distinct(session_starts)))
 })
 
 test_that("Data has no missing values", {
-  expect_false(any(is.na(featured_table_events)))
+  expect_false(any(is.na(session_starts)))
 })
 
-dates <- create_dates(max(featured_table_events$date))
+dates <- create_dates(max(session_starts$date))
 
 test_that("There are no missing dates since we started", {
   expect_equal(
-    setdiff(featured_table_events$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
+    setdiff(session_starts$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
       length(),
     0
   )
@@ -106,19 +75,29 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # DBTITLE 1,Adding a page_type column to help distinguish between different types of search
-featured_table_events <- featured_table_events %>%
+session_starts <- session_starts %>%
   mutate(page_type = case_when(
-    str_detect(eventCategory, "Table Tool") ~ "Table tool",
-    TRUE ~ "NA"
+    str_detect(pagePath, "/find-statistics/") ~ "Release page",
+    str_detect(pagePath, "/find-statistics") ~ "Find stats navigation",
+    str_detect(pagePath, "/data-catalogue/data-set") ~ "Data catalogue dataset",
+    str_detect(pagePath, "/data-catalogue") ~ "Data catalogue navigation",
+    str_detect(pagePath, "/data-tables/permalink") ~ "Permalink",
+    str_detect(pagePath, "/data-tables/") ~ "Table tool",
+    str_detect(pagePath, "/methodology/") ~ "Methodology page",
+    str_detect(pagePath, "/methodology") ~ "Methodology navigation",
+    str_detect(pagePath, "/subscriptions/") ~ "Subscriptions",
+    str_detect(pagePath, "/glossary") ~ "Glossary",
+    str_detect(pagePath, "/cookies") ~ "Cookies",
+    str_detect(pagePath, "/") ~ "Homepage",
+    TRUE ~ 'NA'
   ))
-
 
 # COMMAND ----------
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
-  expect_true(nrow(featured_table_events %>% filter(page_type == "NA")) == 0)
-})
+    expect_true(nrow(session_starts %>% filter(page_type =='NA')) == 0)
+    })
 
 # COMMAND ----------
 
@@ -131,19 +110,22 @@ slugs <- unique(scraped_publications$slug)
 
 # DBTITLE 1,Joining publication info
 # Joining publication info onto the publication specific events
-featured_table_events <- featured_table_events |>
-  mutate(slug = str_remove(pagePath, "^/(data-tables|find-statistics)/")) |>
+session_starts <- session_starts |>
+  mutate(slug = str_remove(pagePath, "^/(methodology|find-statistics|data-catalogue|data-tables|subscriptions)/")) |>
+  mutate(slug = str_remove(slug, "-methodology")) |>
   mutate(slug = str_remove(slug, "/.*")) |>
+  mutate(slug = str_trim(slug, side = "both")) |>
   mutate(slug = str_remove(slug, "\\.$")) |>
+  mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title) |>
   mutate(publication = str_to_title(publication))
 
-dates <- create_dates(max(featured_table_events$date))
+dates <- create_dates(max(session_starts$date))
 
 test_that("There are no missing dates since we started", {
   expect_equal(
-    setdiff(featured_table_events$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
+    setdiff(session_starts$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
       length(),
     0
   )
@@ -152,14 +134,13 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # selecting just the columns we're interested in storing
-
-featured_table_events <- featured_table_events %>%
-  select(date, pagePath, page_type, publication, eventLabel, eventCount)
+session_starts <- session_starts %>%
+select(date, pagePath, page_type, publication, eventCount)
 
 # COMMAND ----------
 
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, featured_table_events, overwrite = TRUE)
+updated_spark_df <- copy_to(sc, session_starts, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
@@ -175,7 +156,7 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, featured_table_events)
+  expect_equal(nrow(temp_table_data), nrow(session_starts))
 })
 
 # Replace the old table with the new one
@@ -187,12 +168,11 @@ print_changes_summary(temp_table_data, previous_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table
+# MAGIC We're left with the following table 
 # MAGIC
-# MAGIC - **date**: The date the event occured on (earliest date = 01/09/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
-# MAGIC - **page_type**: Type of service page (Table tool)
-# MAGIC - **publication**: The publication title
-# MAGIC - **eventLabel**: The featured table title
-# MAGIC - **eventCount**: The number of times the featured table was viewed on given day
+# MAGIC - **date**: The date the session started (earliest date 22/06/2023)
+# MAGIC - **pagePath**: The pagePath where the session started
+# MAGIC - **page_type**: Type of service page (Release page, Data catalogue, glossary etc)
+# MAGIC - **publication**: The publication title (relevant for pages that have an associated publication only)
+# MAGIC - **eventCount**: The number of session starts for that page on given day
 # MAGIC

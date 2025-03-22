@@ -100,6 +100,11 @@ test_that("Number of rows is more than find stats results", {
 # MAGIC - slug == "school-workforce-in-england-methodolgy" & title == "School workforce in England"
 # MAGIC
 # MAGIC Will add these as rows manually to end of combined_scrape
+# MAGIC
+# MAGIC got another - 
+# MAGIC - neet-age-16-to-24 / NEET age 16 to 24
+# MAGIC - level-2-and-3-attainment-age-16-25 / Level 2 and 3 attainment age 16 to 25
+# MAGIC - level-2-and-3-attainment-by-young-people / Level 2 and 3 attainment age 16 to 25
 
 # COMMAND ----------
 
@@ -110,6 +115,7 @@ new_rows <- data.frame(
     "pupil-exclusion-statistics",
     "further-education-and-skills-statistics",
     "level-2-and-3-attainment-age-16-to-25",
+    "level-2-and-3-attainment-age-16-25"
     "education-provision-children-under-5-years-of-age",
     "school-admission-appeals-in-england",
     "children-accommodated-in-secure-children-s-homes",
@@ -119,13 +125,16 @@ new_rows <- data.frame(
     "participation-in-education-training-and-employment-age-16-to-18",
     "progression-to-higher-education-and-training",
     "pupil-absence-statistics",
-    "school-workforce-in-england-methodolgy"
+    "school-workforce-in-england-methodolgy",
+    "neet-age-16-to-24",
+    "level-2-and-3-attainment-by-young-people"
   ),
   title = c(
     "Schools, pupils and their characteristics",
     "Employer Skills Survey",
     "Suspensions and permanent exclusions in England",
     "Further education and skills",
+    "Level 2 and 3 attainment age 16 to 25",
     "Level 2 and 3 attainment age 16 to 25",
     "Education provision: children under 5 years of age",
     "Admission appeals in England",
@@ -136,7 +145,9 @@ new_rows <- data.frame(
     "Participation in education, training and employment age 16 to 18",
     "Progression to higher education or training",
     "Pupil absence in schools in England",
-    "School workforce in England"
+    "School workforce in England",
+    "NEET age 16 to 24",
+    "Level 2 and 3 attainment age 16 to 25"
   )
 )
 

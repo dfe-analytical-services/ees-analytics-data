@@ -18,7 +18,7 @@ sc <- spark_connect(method = "databricks")
 
 # DBTITLE 1,Read in and check table integrity
 aggregated_data <- sparklyr::sdf_sql(sc, paste("
-  SELECT date, pagePath, SUM(pageviews) AS screenPageViews, SUM(sessions) AS sessions
+  SELECT date, pagePath, SUM(pageviews) AS pageviews, SUM(sessions) AS sessions
   FROM (
     SELECT date, pagePath, pageviews, sessions FROM", ua_table_name, "
     UNION ALL
@@ -61,13 +61,6 @@ filtered_data <- aggregated_data |>
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC Decided to aggregate up to publication level here to reduce the rows.
-# MAGIC
-# MAGIC Currently for the app, we can leave it up to the publication teams to look at dates and think about separate releases by date.
-
-# COMMAND ----------
-
 # DBTITLE 1,Create a slug column and join on publication titles
 joined_data <- filtered_data |>
   mutate(slug = str_remove(pagePath, "^/find-statistics/")) |>
@@ -76,22 +69,15 @@ joined_data <- filtered_data |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title) |>
   # this drops a raft of dodgy URLs like '/find-statistics/school-workforce-in-england)'
-  filter(!is.na(publication)) |>
-  select(date, pagePath, publication, screenPageViews, sessions)
-
-pub_agg_data <- joined_data %>%
-  group_by(date, publication) %>%
-  summarise(
-    screenPageViews = sum(screenPageViews), 
-    sessions = sum(sessions),
-    .groups = "keep"
-  )
+  filter(!is.na(publication)) |> 
+  select(date, pagePath, publication, pageviews, sessions) |>
+  mutate(publication = str_to_title(publication))
 
 dates <- create_dates(max(aggregated_data$date))
 
 test_that("There are no missing dates since we started", {
   expect_equal(
-    setdiff(pub_agg_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
+    setdiff(aggregated_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
       length(),
     0
   )
@@ -100,7 +86,7 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, pub_agg_data, overwrite = TRUE)
+updated_spark_df <- copy_to(sc, joined_data, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
@@ -116,7 +102,7 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(nrow(temp_table_data), nrow(pub_agg_data))
+  expect_equal(temp_table_data, joined_data)
 })
 
 # Replace the old table with the new one
