@@ -214,11 +214,6 @@ print_changes_summary(temp_table_data, previous_data)
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC select * from catalog_40_copper_statistics_services.analytics_app.ees_tables_created
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC We're left with the following table
 # MAGIC

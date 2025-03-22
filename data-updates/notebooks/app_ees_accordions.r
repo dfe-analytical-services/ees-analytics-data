@@ -156,7 +156,8 @@ accordion_events <- accordion_events |>
   mutate(slug = str_remove_all(slug, "[^a-zA-Z0-9-]")) |>
   mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
-  rename("publication" = title)
+  rename("publication" = title) |>
+  mutate(publication = str_to_title(publication))
 
 dates <- create_dates(max(accordion_events$date))
 

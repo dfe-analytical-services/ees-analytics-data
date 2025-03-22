@@ -118,7 +118,8 @@ session_starts <- session_starts |>
   mutate(slug = str_remove(slug, "\\.$")) |>
   mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
-  rename("publication" = title)
+  rename("publication" = title) |>
+  mutate(publication = str_to_title(publication))
 
 dates <- create_dates(max(session_starts$date))
 

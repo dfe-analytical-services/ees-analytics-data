@@ -136,7 +136,8 @@ featured_table_events <- featured_table_events |>
   mutate(slug = str_remove(slug, "/.*")) |>
   mutate(slug = str_remove(slug, "\\.$")) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
-  rename("publication" = title)
+  rename("publication" = title) |>
+  mutate(publication = str_to_title(publication))
 
 dates <- create_dates(max(featured_table_events$date))
 
