@@ -35,6 +35,7 @@ create_dates <- function(latest_date) {
     since_4thsep_date = "2024-09-02",
     six_month_date = latest_date - 183,
     one_year_date = latest_date - 365,
+    search_console_date = "2023-11-08",
     ga4_date = "2023-06-22",
     all_time_date = "2020-04-03"
   )
