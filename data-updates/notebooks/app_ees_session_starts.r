@@ -169,7 +169,7 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC %md
 # MAGIC We're left with the following table 
 # MAGIC
-# MAGIC - **date**: The date the session started 
+# MAGIC - **date**: The date the session started (earliest date 22/06/2023)
 # MAGIC - **pagePath**: The pagePath where the session started
 # MAGIC - **page_type**: Type of service page (Release page, Data catalogue, glossary etc)
 # MAGIC - **publication**: The publication title (relevant for pages that have an associated publication only)

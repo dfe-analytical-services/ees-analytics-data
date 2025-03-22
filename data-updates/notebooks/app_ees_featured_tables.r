@@ -28,7 +28,7 @@ sc <- spark_connect(method = "databricks")
 # MAGIC
 # MAGIC **eventCategory** gives the page the evnt occured on, always the Table Tool in this instance
 # MAGIC
-# MAGIC For search events in UA we need:
+# MAGIC For featured table events in UA we need:
 # MAGIC
 # MAGIC **eventAction**
 # MAGIC - Clicked to View Featured Table (table tool)
@@ -188,10 +188,10 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC %md
 # MAGIC We're left with the following table
 # MAGIC
-# MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
+# MAGIC - **date**: The date the event occured on (earliest date = 01/09/2021)
 # MAGIC - **pagePath**: The pagePath the event occured on
-# MAGIC - **page_type**: Type of service page (Release page, Data catalogue, glossary etc)
-# MAGIC - **publication**: The publication title (relevant for 'Release page' page_types only atm, need to update code to add to methodology pages too)
-# MAGIC - **eventLabel**: The search term used
-# MAGIC - **eventCount**: The number of searches for that term on given day
+# MAGIC - **page_type**: Type of service page (Table tool)
+# MAGIC - **publication**: The publication title
+# MAGIC - **eventLabel**: The featured table title
+# MAGIC - **eventCount**: The number of times the featured table was viewed on given day
 # MAGIC
