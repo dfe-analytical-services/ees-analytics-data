@@ -25,8 +25,9 @@ sc <- spark_connect(method = "databricks")
 # DBTITLE 1,Pull in raw data
 full_data <- sparklyr::sdf_sql(
   sc, paste("
-    SELECT * FROM", search_console_table_name,
-    "WHERE date >= DATE_SUB(CURRENT_DATE(), 365);
+    SELECT query, pagePath, sum(clicks) as clicks, sum(impressions) as impressions FROM", search_console_table_name,
+    "WHERE date >= DATE_SUB(CURRENT_DATE(), 365)
+    GROUP BY query, pagePath;
   ")
 ) %>% collect()
 
@@ -56,16 +57,16 @@ joined_data <- filtered_data |>
   rename("publication" = title) |>
   # this drops a raft of dodgy URLs like '/find-statistics/school-workforce-in-england)'
   filter(!is.na(publication)) |>
-  select(date, query, publication, clicks, impressions) |>
+  select(query, publication, clicks, impressions) |>
   mutate(publication = str_to_title(publication))
 
 # COMMAND ----------
 
 pub_queries_clicks <- data.frame()
 
-for(pub in unique(scraped_publications$title)){
+for(pub in unique(joined_data$publication)){
   message("Finding top 10 clicks for ", pub)
-
+  message("Current rows: ", nrow(pub_queries_clicks))
   pub_queries_clicks <- rbind(
     pub_queries_clicks,
     joined_data |>
@@ -80,9 +81,9 @@ for(pub in unique(scraped_publications$title)){
 
 pub_queries_impressions <- data.frame()
 
-for(pub in unique(scraped_publications$title)){
+for(pub in unique(joined_data$publication)){
   message("Finding top 10 impressions for ", pub)
-
+  message("Current rows: ", nrow(pub_queries_impressions))
   pub_queries_impressions <- rbind(
     pub_queries_impressions,
     joined_data |>
