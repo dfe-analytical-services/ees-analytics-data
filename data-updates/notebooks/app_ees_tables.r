@@ -10,7 +10,7 @@ lapply(packages, library, character.only = TRUE)
 ga4_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_events"
 ua_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_events"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_tables_created"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_tables_created"
 
 sc <- spark_connect(method = "databricks")
 
@@ -168,17 +168,10 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting just the columns of interest
-# TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
-
-tables_created <- tables_created %>%
-  select(date, pagePath, page_type, publication, eventLabel, eventCount)
-
-
-# COMMAND ----------
-
 # going to aggregate and store at publication level for now, can unpick later if needed 
 tables_created <- tables_created %>%
+  select(date, page_type, publication, eventLabel, eventCount) %>%
+  filter(!is.na(publication)) %>%
   group_by(date, page_type, publication, eventLabel) %>%
   summarise(
     eventCount = sum(eventCount)
