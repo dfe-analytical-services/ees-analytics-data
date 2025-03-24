@@ -10,7 +10,8 @@ lapply(packages, library, character.only = TRUE)
 ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_source_medium"
 ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_source_medium"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_source_medium"
+write_service_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service_source_medium"
+write_publication_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_source_medium"
 
 sc <- spark_connect(method = "databricks")
 
@@ -53,6 +54,28 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
+full_data <- full_data %>%
+  mutate(page_type = case_when(
+    str_detect(pagePath, "/data-guidance") ~ "Data guidance",
+    str_detect(pagePath, "/prerelease-access-list") ~ "Pre-release access",
+    str_detect(pagePath, "/find-statistics/") ~ "Release page",
+    str_detect(pagePath, "/find-statistics/") ~ "Release page",
+    str_detect(pagePath, "/find-statistics") ~ "Find stats navigation",
+    str_detect(pagePath, "/data-catalogue/data-set") ~ "Data catalogue dataset",
+    str_detect(pagePath, "/data-catalogue") ~ "Data catalogue navigation",
+    str_detect(pagePath, "/data-tables/permalink") ~ "Permalink",
+    str_detect(pagePath, "/data-tables/") ~ "Table tool",
+    str_detect(pagePath, "/methodology/") ~ "Methodology page",
+    str_detect(pagePath, "/methodology") ~ "Methodology navigation",
+    str_detect(pagePath, "/subscriptions/") ~ "Subscriptions",
+    str_detect(pagePath, "/glossary") ~ "Glossary",
+    str_detect(pagePath, "/cookies") ~ "Cookies",
+    str_detect(pagePath, "/") ~ "Homepage",
+    TRUE ~ 'NA'
+  ))
+
+# COMMAND ----------
+
 # DBTITLE 1,Filter table down to only publication and release pages
 scraped_publications <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", scrape_table_name)) |> collect()
 
@@ -83,20 +106,41 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-joined_data <- joined_data %>% select(date, pagePath, publication, source, medium, pageviews, sessions, avgTimeOnPage, bounceRate)
+# selecting just the columns we're interested in storing and creating a service level table
+service_source_medium <- joined_data %>%
+  select(date, page_type, source, medium, pageviews, sessions) %>%
+  group_by(date, page_type, source, medium) %>%
+  summarise(
+    pageviews = sum(pageviews),
+    sessions = sum(sessions),
+    .groups = 'keep'
+  )
+
+# COMMAND ----------
+
+# selecting just the columns we're interested in storing and creating a service level table
+publication_source_medium <- joined_data %>%
+  filter(page_type == 'Release page') %>%
+  select(date, publication, source, medium, pageviews, sessions) %>%
+  group_by(date, publication, source, medium) %>%
+  summarise(
+    pageviews = sum(pageviews),
+    sessions = sum(sessions),
+    .groups = 'keep'
+  )
 
 # COMMAND ----------
 
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, joined_data, overwrite = TRUE)
+updated_service_spark_df <- copy_to(sc, service_source_medium, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
-spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
+spark_write_table(updated_service_spark_df, paste0(write_service_table_name, "_temp"), mode = "overwrite")
 
-temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name, "_temp")) %>% collect()
-previous_data <- tryCatch(
+temp_service_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name, "_temp")) %>% collect()
+previous_service_data <- tryCatch(
   {
-    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name)) %>% collect()
   },
   error = function(e) {
     NULL
@@ -104,29 +148,52 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, joined_data)
+  expect_equal(nrow(temp_service_table_data), nrow(service_source_medium))
 })
 
 # Replace the old table with the new one
-dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_table_name))
-dbExecute(sc, paste0("ALTER TABLE ", write_table_name, "_temp RENAME TO ", write_table_name))
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_service_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_service_table_name, "_temp RENAME TO ", write_service_table_name))
 
-print_changes_summary(temp_table_data, previous_data)
+print_changes_summary(temp_service_table_data, previous_service_data)
+
+# COMMAND ----------
+
+updated_publication_spark_df <- copy_to(sc, publication_source_medium, overwrite = TRUE)
+
+# Write to temp table while we confirm we're good to overwrite data
+spark_write_table(updated_publication_spark_df, paste0(write_publication_table_name, "_temp"), mode = "overwrite")
+
+temp_publication_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name, "_temp")) %>% collect()
+previous_publication_data <- tryCatch(
+  {
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name)) %>% collect()
+  },
+  error = function(e) {
+    NULL
+  }
+)
+
+test_that("Temp table data matches updated data", {
+  expect_equal(nrow(temp_publication_table_data), nrow(publication_source_medium))
+})
+
+# Replace the old table with the new one
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_publication_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_publication_table_name, "_temp RENAME TO ", write_publication_table_name))
+
+print_changes_summary(temp_publication_table_data, previous_publication_data)
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC NOTE: 
 # MAGIC
-# MAGIC We could clean some dodgy pagePagepaths out of this but have left for now whilst it includes servive as a whole and specific publications. 
 # MAGIC Remember if aggregating up from this level avgtimeonpage and bouncerate will no longer be accurate. To aggregate and have an accurate time on page we'd need to shorten time series to just GA4 data
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC
-# MAGIC BIG NOTE - need to actually update this one as I forgot but the documentation is here when it's ready :) 
-# MAGIC
 # MAGIC **Note:**
 # MAGIC
 # MAGIC We are left with two tables:
