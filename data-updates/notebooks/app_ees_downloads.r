@@ -217,9 +217,20 @@ downloads <- downloads |>
   mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title) |>
-  mutate(publication = str_to_title(publication)) |> 
   mutate(publication = case_when(
     is.na(publication) & page_type == "Data catalogue" ~ trimws(str_extract(eventLabel, "(?<=Publication: ).*(?=, R)")),
+    TRUE ~ publication
+  )) |>
+  mutate(publication = str_to_title(publication))
+
+# handling publications that since changed name and therefore need to be recoded to be able to join on to expected publication spine
+downloads <- downloads %>%
+  mutate(publication = case_when(
+    publication == "Characteristics of Children in Need" ~ "Children In Need",
+    publication == "Graduate Outcomes (LEO): Provider Level Data" ~ "Leo Graduate Outcomes Provider Level Data",
+    publication == "Level 2 and 3 Attainment by Young People Aged 19" ~ "Level 2 And 3 Attainment Age 16 To 25",
+    publication == "NEET Annual Brief" ~ "Neet Age 16 To 24",
+    publication == "Participation in Education and Training and Employment" ~ "Participation In Education, Training And Employment Age 16 To 18",
     TRUE ~ publication
   ))
 
