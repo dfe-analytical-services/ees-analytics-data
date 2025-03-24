@@ -56,6 +56,9 @@ test_that("There are no missing dates since we started", {
 
 full_data <- full_data %>%
   mutate(page_type = case_when(
+    str_detect(pagePath, "/data-guidance") ~ "Data guidance",
+    str_detect(pagePath, "/prerelease-access-list") ~ "Pre-release access",
+    str_detect(pagePath, "/find-statistics/") ~ "Release page",
     str_detect(pagePath, "/find-statistics/") ~ "Release page",
     str_detect(pagePath, "/find-statistics") ~ "Find stats navigation",
     str_detect(pagePath, "/data-catalogue/data-set") ~ "Data catalogue dataset",
