@@ -10,7 +10,8 @@ lapply(packages, library, character.only = TRUE)
 ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_device_browser"
 ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_device_browser"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_device_browser"
+write_service_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service_device_browser"
+write_publication_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_device_browser"
 
 sc <- spark_connect(method = "databricks")
 
@@ -53,6 +54,31 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
+full_data <- full_data %>%
+  mutate(page_type = case_when(
+    str_detect(pagePath, "/find-statistics/") ~ "Release page",
+    str_detect(pagePath, "/find-statistics") ~ "Find stats navigation",
+    str_detect(pagePath, "/data-catalogue/data-set") ~ "Data catalogue dataset",
+    str_detect(pagePath, "/data-catalogue") ~ "Data catalogue navigation",
+    str_detect(pagePath, "/data-tables/permalink") ~ "Permalink",
+    str_detect(pagePath, "/data-tables/") ~ "Table tool",
+    str_detect(pagePath, "/methodology/") ~ "Methodology page",
+    str_detect(pagePath, "/methodology") ~ "Methodology navigation",
+    str_detect(pagePath, "/subscriptions/") ~ "Subscriptions",
+    str_detect(pagePath, "/glossary") ~ "Glossary",
+    str_detect(pagePath, "/cookies") ~ "Cookies",
+    str_detect(pagePath, "/") ~ "Homepage",
+    TRUE ~ 'NA'
+  ))
+
+# COMMAND ----------
+
+test_that("There are no events without a page type classification", {
+    expect_true(nrow(full_data %>% filter(page_type =='NA')) == 0)
+    })
+
+# COMMAND ----------
+
 # DBTITLE 1,Filter table down to only publication and release pages
 scraped_publications <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", scrape_table_name)) |> collect()
 
@@ -83,20 +109,41 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-joined_data <- joined_data %>% select(date, pagePath, publication, device, browser, pageviews, sessions, avgTimeOnPage, bounceRate)
+# selecting just the columns we're interested in storing and creating a service level table
+service_device_browser <- joined_data %>%
+  select(date, page_type, device, browser, pageviews, sessions) %>%
+  group_by(date, page_type, device, browser) %>%
+  summarise(
+    pageviews = sum(pageviews),
+    sessions = sum(sessions),
+    .groups = 'keep'
+  )
+
+# COMMAND ----------
+
+# selecting just the columns we're interested in storing and creating a service level table
+publication_device_browser <- joined_data %>%
+  filter(page_type == 'Release page') %>%
+  select(date, publication, device, browser, pageviews, sessions) %>%
+  group_by(date, publication, device, browser) %>%
+  summarise(
+    pageviews = sum(pageviews),
+    sessions = sum(sessions),
+    .groups = 'keep'
+  )
 
 # COMMAND ----------
 
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, joined_data, overwrite = TRUE)
+updated_service_spark_df <- copy_to(sc, service_device_browser, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
-spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
+spark_write_table(updated_service_spark_df, paste0(write_service_table_name, "_temp"), mode = "overwrite")
 
-temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name, "_temp")) %>% collect()
-previous_data <- tryCatch(
+temp_service_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name, "_temp")) %>% collect()
+previous_service_data <- tryCatch(
   {
-    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name)) %>% collect()
   },
   error = function(e) {
     NULL
@@ -104,14 +151,41 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, joined_data)
+  expect_equal(nrow(temp_service_table_data), nrow(service_device_browser))
 })
 
 # Replace the old table with the new one
-dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_table_name))
-dbExecute(sc, paste0("ALTER TABLE ", write_table_name, "_temp RENAME TO ", write_table_name))
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_service_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_service_table_name, "_temp RENAME TO ", write_service_table_name))
 
-print_changes_summary(temp_table_data, previous_data)
+print_changes_summary(temp_service_table_data, previous_service_data)
+
+# COMMAND ----------
+
+updated_publication_spark_df <- copy_to(sc, publication_device_browser, overwrite = TRUE)
+
+# Write to temp table while we confirm we're good to overwrite data
+spark_write_table(updated_publication_spark_df, paste0(write_publication_table_name, "_temp"), mode = "overwrite")
+
+temp_publication_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name, "_temp")) %>% collect()
+previous_publication_data <- tryCatch(
+  {
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name)) %>% collect()
+  },
+  error = function(e) {
+    NULL
+  }
+)
+
+test_that("Temp table data matches updated data", {
+  expect_equal(nrow(temp_publication_table_data), nrow(publication_device_browser))
+})
+
+# Replace the old table with the new one
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_publication_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_publication_table_name, "_temp RENAME TO ", write_publication_table_name))
+
+print_changes_summary(temp_publication_table_data, previous_publication_data)
 
 # COMMAND ----------
 
