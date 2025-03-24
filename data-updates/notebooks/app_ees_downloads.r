@@ -10,7 +10,9 @@ lapply(packages, library, character.only = TRUE)
 ga4_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_events"
 ua_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_events"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_downloads"
+write_service_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service_downloads"
+write_publication_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_downloads"
+
 
 sc <- spark_connect(method = "databricks")
 
@@ -215,7 +217,11 @@ downloads <- downloads |>
   mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title) |>
-  mutate(publication = str_to_title(publication))
+  mutate(publication = str_to_title(publication)) |> 
+  mutate(publication = case_when(
+    is.na(publication) & page_type == "Data catalogue" ~ trimws(str_extract(eventLabel, "(?<=Publication: ).*(?=, R)")),
+    TRUE ~ publication
+  ))
 
 dates <- create_dates(max(downloads$date))
 
@@ -229,24 +235,52 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting just the columns we're interested in storing
-# TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
+# MAGIC %md
+# MAGIC Publication not populated for (and therefore downloads are not counted in publication table) 
+# MAGIC - Any fast-track links (need EES database context to help with those)
+# MAGIC - permalinks
+# MAGIC  - publications that are too long for the event label to be usable (eventLabel = 
+# MAGIC      - 'Publication: Outcomes for Children in Need, Including Children Looked After by Local Authorities in ' 
+# MAGIC     - 'Publication: Attendance in Education and Early Years Settings During the Coronavirus (COVID-19) Pand'
+# MAGIC     - 'Publication: FE Learners Going Into Employment and Learning Destinations by Local Authority District')
+# MAGIC
+# MAGIC These downloads are included in the service level stats.
 
-downloads <- downloads %>%
-  select(date, pagePath, page_type, download_type, publication, eventLabel, eventCount)
+# COMMAND ----------
+
+# selecting just the columns we're interested in storing and creating a publication search events table 
+publication_downloads <- downloads %>%
+  select(date, publication, page_type, download_type, eventLabel, eventCount) %>%
+  filter(!is.na(publication)) %>%
+  group_by(date, publication, page_type, download_type, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount),
+    .groups = 'keep'
+  )
+
+# COMMAND ----------
+
+# selecting just the columns we're interested in storing and creating a service search events table
+service_downloads <- downloads %>%
+  select(date, page_type, download_type, eventLabel, eventCount) %>%
+  group_by(date, page_type, download_type, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount),
+    .groups = 'keep'
+  )
 
 # COMMAND ----------
 
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, downloads, overwrite = TRUE)
+updated_service_spark_df <- copy_to(sc, service_downloads, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
-spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
+spark_write_table(updated_service_spark_df, paste0(write_service_table_name, "_temp"), mode = "overwrite")
 
-temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name, "_temp")) %>% collect()
-previous_data <- tryCatch(
+temp_service_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name, "_temp")) %>% collect()
+previous_service_data <- tryCatch(
   {
-    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name)) %>% collect()
   },
   error = function(e) {
     NULL
@@ -254,14 +288,41 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, downloads)
+  expect_equal(nrow(temp_service_table_data), nrow(service_downloads))
 })
 
 # Replace the old table with the new one
-dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_table_name))
-dbExecute(sc, paste0("ALTER TABLE ", write_table_name, "_temp RENAME TO ", write_table_name))
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_service_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_service_table_name, "_temp RENAME TO ", write_service_table_name))
 
-print_changes_summary(temp_table_data, previous_data)
+print_changes_summary(temp_service_table_data, previous_service_data)
+
+# COMMAND ----------
+
+updated_publication_spark_df <- copy_to(sc, publication_downloads, overwrite = TRUE)
+
+# Write to temp table while we confirm we're good to overwrite data
+spark_write_table(updated_publication_spark_df, paste0(write_publication_table_name, "_temp"), mode = "overwrite")
+
+temp_publication_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name, "_temp")) %>% collect()
+previous_publication_data <- tryCatch(
+  {
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name)) %>% collect()
+  },
+  error = function(e) {
+    NULL
+  }
+)
+
+test_that("Temp table data matches updated data", {
+  expect_equal(nrow(temp_publication_table_data), nrow(publication_downloads))
+})
+
+# Replace the old table with the new one
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_publication_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_publication_table_name, "_temp RENAME TO ", write_publication_table_name))
+
+print_changes_summary(temp_publication_table_data, previous_publication_data)
 
 # COMMAND ----------
 
