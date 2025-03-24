@@ -152,7 +152,8 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # selecting just the columns we're interested in storing and saving table to publication level 
-# NOTE - this only includes featured table clicks from the table tool (where the url includes publication name). It doesn't include fast track clicks (from release pages) as there is no way for me to pull out the publication name from what we store for those. However I think we can cover this fast track from release page info from the tables created events which is handled separately. [null publication eventCounts: 31839]
+# NOTE - this only includes featured table clicks from the table tool (where the url includes publication name). It doesn't include fast track clicks (from release pages) as there is no way for me to pull out the publication name from what we store for those. However I think we can cover this fast track from release page info from the tables created events which is handled separately. 
+# UPDATE - after a quick check this logic doesn't hole [featured table null publication eventCounts: 31839; tables created from release page: 931]. I think we need the EES database data to take the linked publication for each fast track url and join it on.
 
 featured_table_events <- featured_table_events %>%
   filter(publication !='NA') %>%
