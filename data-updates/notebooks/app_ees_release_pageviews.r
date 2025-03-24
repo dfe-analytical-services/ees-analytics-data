@@ -17,7 +17,7 @@ sc <- spark_connect(method = "databricks")
 # COMMAND ----------
 
 # DBTITLE 1,Read in and check table integrity
-aggregated_data <- sparklyr::sdf_sql(sc, paste("
+sql_data <- sparklyr::sdf_sql(sc, paste("
   SELECT date, pagePath, SUM(pageviews) AS pageviews, SUM(sessions) AS sessions
   FROM (
     SELECT date, pagePath, pageviews, sessions FROM", ua_table_name, "
@@ -29,18 +29,18 @@ aggregated_data <- sparklyr::sdf_sql(sc, paste("
 ")) %>% collect()
 
 test_that("No duplicate rows", {
-  expect_true(nrow(aggregated_data) == nrow(dplyr::distinct(aggregated_data)))
+  expect_true(nrow(sql_data) == nrow(dplyr::distinct(sql_data)))
 })
 
 test_that("Data has no missing values", {
-  expect_false(any(is.na(aggregated_data)))
+  expect_false(any(is.na(sql_data)))
 })
 
-dates <- create_dates(max(aggregated_data$date))
+dates <- create_dates(max(sql_data$date))
 
 test_that("There are no missing dates since we started", {
   expect_equal(
-    setdiff(aggregated_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
+    setdiff(sql_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
       length(),
     0
   )
@@ -54,10 +54,17 @@ scraped_publications <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", scrape_tabl
 slugs <- unique(scraped_publications$slug)
 possible_suffixes <- c("/methodology", "/data-guidance", "/prerelease-access-list")
 
-filtered_data <- aggregated_data |>
+filtered_data <- sql_data |>
   filter(str_detect(pagePath, "/find-statistics/")) |>
   filter(str_detect(pagePath, paste(slugs, collapse = "|"))) |>
   filter(!str_detect(pagePath, paste(possible_suffixes, collapse = "|")))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC Decided to aggregate up to publication level here to reduce the rows.
+# MAGIC
+# MAGIC Currently for the app, we can leave it up to the publication teams to look at dates and think about separate releases by date.
 
 # COMMAND ----------
 
@@ -70,14 +77,22 @@ joined_data <- filtered_data |>
   rename("publication" = title) |>
   # this drops a raft of dodgy URLs like '/find-statistics/school-workforce-in-england)'
   filter(!is.na(publication)) |> 
-  select(date, pagePath, publication, pageviews, sessions) |>
+  select(date, pagePath, publication, pageviews, sessions) 
+  
+pub_agg_data <- joined_data |>
+  group_by(date, publication) |>
+  summarise(
+    pageviews = sum(pageviews),
+    sessions = sum(sessions),
+    .groups = "keep"
+  ) |>
   mutate(publication = str_to_title(publication))
 
-dates <- create_dates(max(aggregated_data$date))
+dates <- create_dates(max(sql_data$date))
 
 test_that("There are no missing dates since we started", {
   expect_equal(
-    setdiff(aggregated_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
+    setdiff(pub_agg_data$date, seq(as.Date(dates$all_time_date), max(dates$latest_date), by = "day")) |>
       length(),
     0
   )
@@ -86,7 +101,7 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, joined_data, overwrite = TRUE)
+updated_spark_df <- copy_to(sc, pub_agg_data, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
@@ -102,7 +117,7 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, joined_data)
+  expect_equal(nrow(temp_table_data), nrow(pub_agg_data))
 })
 
 # Replace the old table with the new one
