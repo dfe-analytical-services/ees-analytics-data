@@ -120,3 +120,31 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC
 # MAGIC We could clean some dodgy pagePagepaths out of this but have left for now whilst it includes servive as a whole and specific publications. 
 # MAGIC Remember if aggregating up from this level avgtimeonpage and bouncerate will no longer be accurate. To aggregate and have an accurate time on page we'd need to shorten time series to just GA4 data
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC
+# MAGIC BIG NOTE - need to actually update this one as I forgot but the documentation is here when it's ready :) 
+# MAGIC
+# MAGIC **Note:**
+# MAGIC
+# MAGIC We are left with two tables:
+# MAGIC
+# MAGIC 1. **Publication Table**
+# MAGIC    For release pages only.
+# MAGIC    - date
+# MAGIC    - publication
+# MAGIC    - source
+# MAGIC    - medium
+# MAGIC    - pageviews
+# MAGIC    - sessions
+# MAGIC
+# MAGIC 2. **Service Table**
+# MAGIC    For all service pages.
+# MAGIC    - date
+# MAGIC    - page_type
+# MAGIC    - source
+# MAGIC    - medium
+# MAGIC    - pageviews
+# MAGIC    - sessions

@@ -211,7 +211,6 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC We're left with the following table
 # MAGIC
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
 # MAGIC - **page_type**: Type of service page
 # MAGIC - **publication**: The associated publication title
 # MAGIC - **eventLabel**: The info we have for what subject was used to create the table

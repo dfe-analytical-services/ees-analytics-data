@@ -266,12 +266,21 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following tables:
 # MAGIC
-# MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
-# MAGIC - **page_type**: Type of service page (Release page, Data catalogue, glossary etc)
+# MAGIC ### Publication Table
+# MAGIC Release and methodology pages only.
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
 # MAGIC - **publication**: The publication title (relevant for pages that have an associated publication only)
+# MAGIC - **page_type**: Type of service page (Release page, Methodology pages)
 # MAGIC - **eventLabel**: The search term used
-# MAGIC - **eventCount**: The number of searches for that term on given day
+# MAGIC - **eventCount**: The number of searches for that term on a given day
+# MAGIC
+# MAGIC ### Service Table
+# MAGIC All other page types / service pages
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
+# MAGIC - **page_type**: Type of service page (Data catalogue, glossary, etc)
+# MAGIC - **eventLabel**: The search term used
+# MAGIC - **eventCount**: The number of searches for that term on a given day
+# MAGIC
 # MAGIC

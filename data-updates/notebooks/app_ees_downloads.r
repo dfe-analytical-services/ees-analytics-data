@@ -327,14 +327,21 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table
+# MAGIC We're left with the following two tables:
 # MAGIC
-# MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
-# MAGIC - **page_type**: Type of service page (Release page, Data catalogue, permalink etc)
-# MAGIC - **download_type**: Type of download (csv, ods, all files etc)
-# MAGIC - **publication**: The publication title (relevant for pages that have an associated publication in their pagePath only)
-# MAGIC TO DO: for some events we can take publicaiton details from the eventLabel and for permalinks we may be able to get publication from a scrape or the EES database - not doing anythign with these atm!
-# MAGIC - **eventLabel**: The info we have for what file was downloaded (this often includes the relevant publication too though is truncated unhelpfully)
-# MAGIC - **eventCount**: The number of downloads of that type on given day
+# MAGIC **Table 1: Publication level**
+# MAGIC For everything I'm able to identify the publication details for
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
+# MAGIC - **publication**: The publication title 
+# MAGIC - **page_type**: Type of service page (Release page, Data catalogue)
+# MAGIC - **download_type**: Type of download (csv, ods, all files, etc.)
+# MAGIC - **eventLabel**: The info we have for what file was downloaded (this often includes the relevant publication too, though it is truncated unhelpfully)
+# MAGIC - **eventCount**: The number of downloads of that type on a given day
 # MAGIC
+# MAGIC **Table 2: Service level**
+# MAGIC For all downloads across the service
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
+# MAGIC - **page_type**: Type of service page (Release page, Data catalogue, etc.)
+# MAGIC - **download_type**: Type of download (csv, ods, all files, etc.)
+# MAGIC - **eventLabel**: The info we have for what file was downloaded (this often includes the relevant publication too, though it is truncated unhelpfully)
+# MAGIC - **eventCount**: The number of downloads of that type on a given day

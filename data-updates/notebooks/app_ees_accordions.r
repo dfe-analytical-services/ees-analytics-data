@@ -263,12 +263,19 @@ print_changes_summary(temp_service_table_data, previous_service_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following tables:
 # MAGIC
-# MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
-# MAGIC - **page_type**: Type of service page (Release page, methoodlogy, glossary etc)
+# MAGIC ### Publication Table
+# MAGIC For all release and methodology pages
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
+# MAGIC - **page_type**: Type of service page (Release page, methodology)
 # MAGIC - **publication**: The publication title (relevant for pages that have an associated publication only)
 # MAGIC - **eventLabel**: The accordion title
-# MAGIC - **eventCount**: The number of accordion click events on given day
+# MAGIC - **eventCount**: The number of accordion click events on a given day
 # MAGIC
+# MAGIC ### Service Table
+# MAGIC For all other page_types
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
+# MAGIC - **page_type**: Type of service page ('Glossary', 'Table tool', 'Find stats navigation', 'Methodology navigation')
+# MAGIC - **eventLabel**: The accordion title
+# MAGIC - **eventCount**: The number of accordion click events on a given day
