@@ -23,7 +23,8 @@ sc <- spark_connect(method = "databricks")
 
 # DBTITLE 1,Pull in expected slugs
 raw_publication_scrape <- sparklyr::sdf_sql(sc, paste("SELECT slug, title FROM ", scrape_table_name)) %>% 
-  collect()
+  collect() |>
+  mutate(title = str_to_title(title))
 
 # COMMAND ----------
 
@@ -128,7 +129,7 @@ get_average_read_time <- function(pub_slug) {
 # COMMAND ----------
 
 # DBTITLE 1,Do the scrape to calculate page times
-avg_read_time_table <- do.call(rbind, lapply(unique(raw_publication_scrape$slug), get_average_read_time)) |>
+avg_read_time_table <- purrr::map_dfr(unique(raw_publication_scrape$slug), get_average_read_time) |>
   left_join(raw_publication_scrape, by = "slug")
 
 # COMMAND ----------
@@ -146,16 +147,29 @@ successful_scrapes <- avg_read_time_table |>
 testthat::test_that("We have equal numbers of scrape pages to titles", {
   expect_equal(count_raw_pub_titles, count_raw_pub_titles)
 })
-testthat::test_that("Check final table for duplicate row", {
+testthat::test_that("Check final table for duplicate rows", {
   expect_equal(nrow(avg_read_time_table), nrow(dplyr::distinct(avg_read_time_table)))
 })
 
+# COMMAND ----------
+
+original_titles <- unique(raw_publication_scrape$title)
+new_table_titles <- unique(avg_read_time_table$title)
+new_table_titles_with_data <- avg_read_time_table |>
+  filter(!is.na(avg_read_time) & is.numeric(avg_read_time)) |>
+  pull(title) |>
+  unique()
+
 testthat::test_that("All publication titles from the original scrape have a row in the new table", {
-  original_titles <- unique(raw_publication_scrape$title)
-  new_table_titles <- unique(avg_read_time_table$title)
   expect_true(all(original_titles %in% new_table_titles), 
                info = paste("Missing titles:", 
                             toString(original_titles[!original_titles %in% new_table_titles])))
+})
+
+testthat::test_that("All publication titles have an average reading time", {
+  expect_true(all(original_titles %in% new_table_titles_with_data), 
+               info = paste("Missing titles:", 
+                            toString(original_titles[!original_titles %in% new_table_titles_with_data])))
 })
 
 # COMMAND ----------
