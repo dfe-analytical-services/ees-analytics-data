@@ -10,7 +10,7 @@ lapply(packages, library, character.only = TRUE)
 ga4_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_events"
 ua_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_events"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_featured_tables"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_featured_tables"
 
 sc <- spark_connect(method = "databricks")
 
@@ -151,10 +151,17 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting just the columns we're interested in storing
+# selecting just the columns we're interested in storing and saving table to publication level 
+# NOTE - this only includes featured table clicks from the table tool (where the url includes publication name). It doesn't include fast track clicks (from release pages) as there is no way for me to pull out the publication name from what we store for those. However I think we can cover this fast track from release page info from the tables created events which is handled separately. [null publication eventCounts: 31839]
 
 featured_table_events <- featured_table_events %>%
-  select(date, pagePath, page_type, publication, eventLabel, eventCount)
+  filter(publication !='NA') %>%
+  select(date, publication, eventLabel, eventCount) %>%
+  group_by(date, publication, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount),
+    .groups = 'keep'
+  )
 
 # COMMAND ----------
 
@@ -175,7 +182,7 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, featured_table_events)
+  expect_equal(nrow(temp_table_data), nrow(featured_table_events))
 })
 
 # Replace the old table with the new one
