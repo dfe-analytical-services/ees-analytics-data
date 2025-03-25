@@ -121,6 +121,14 @@ service_time_on_page <- joined_data %>%
 
 # COMMAND ----------
 
+session_start_events <- sparklyr::sdf_sql(sc, "SELECT date, page_type, SUM(eventCount) AS total_session_starts FROM catalog_40_copper_statistics_services.analytics_app.ees_session_starts GROUP BY page_type, date") %>%
+  collect() ## total should be 3048542
+
+service_time_on_page <- service_time_on_page |>
+  left_join(session_start_events, by = c("page_type" = "page_type", "date" = "date"))
+
+# COMMAND ----------
+
 # selecting just the columns we're interested in storing and creating a service level table
 publication_time_on_page <- joined_data %>%
   filter(page_type %in% c("Release page", "Methodology page","Table tool","Data guidance","Pre-release access")) %>% 
