@@ -2,7 +2,7 @@
 # DBTITLE 1,Load dependencies
 source("utils.R")
 
-packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow" , "TTR")
+packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow", "TTR")
 
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
@@ -37,7 +37,7 @@ aggregated_data <- aggregated_data %>%
   mutate(
     pageviews_avg7 = TTR::SMA(pageviews, n = 7),
     sessions_avg7 = TTR::SMA(sessions, n = 7),
-    pagesPerSession = pageviews / sessions    
+    pagesPerSession = pageviews / sessions
   )
 
 test_that("No duplicate rows", {
@@ -46,7 +46,7 @@ test_that("No duplicate rows", {
 
 test_that("Data has no missing values", {
   # We expect the rolling average cols to have some missing values so ignoring for this
-  expect_false(any(is.na(aggregated_data |> select(-c(pageviews_avg7, sessions_avg7))))) 
+  expect_false(any(is.na(aggregated_data |> select(-c(pageviews_avg7, sessions_avg7)))))
 })
 
 dates <- create_dates(max(aggregated_data$date))

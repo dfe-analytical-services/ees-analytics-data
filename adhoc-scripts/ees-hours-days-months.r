@@ -32,21 +32,21 @@ sc <- spark_connect(method = "databricks")
 
 # DBTITLE 1,By month
 monthly_breakdown <- sparklyr::sdf_sql(sc, paste0("
-  SELECT 
+  SELECT
   DATE_FORMAT(date, 'MMMM') AS month,
   SUM(sessions) AS sessions
-FROM 
+FROM
   (SELECT date, sessions FROM ", catalog, schema, "ees_ga4_service_summary
    UNION ALL
    SELECT date, sessions FROM ", catalog, schema, "ees_ua_service_summary) AS combined_summary
 WHERE
   YEAR(date) in (2021,2022,2023,2024)
-GROUP BY 
+GROUP BY
   DATE_FORMAT(date, 'MMMM'),
   MONTH(date)
-ORDER BY 
+ORDER BY
   MONTH(date);
-")) |> 
+")) |>
   collect()
 
 ggplot(monthly_breakdown, aes(x = sessions, y = factor(month, levels = rev(month.name)))) +
@@ -101,7 +101,7 @@ ORDER BY
     WHEN 'Friday' THEN 6
     WHEN 'Saturday' THEN 7
   END;
-")) |> 
+")) |>
   collect()
 
 ggplot(daily_breakdown, aes(x = sessions, y = factor(day_of_week, levels = rev(c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))))) +
@@ -127,13 +127,13 @@ ggplot(daily_breakdown, aes(x = sessions, y = factor(day_of_week, levels = rev(c
 
 # DBTITLE 1,By hour
 hourly_breakdown <- sparklyr::sdf_sql(sc, paste0("
-  SELECT 
-    cast(hour as int), 
-    sum(sessions) as sessions 
-  FROM ", catalog, schema, "ees_ga4_hourly 
-  GROUP BY hour 
+  SELECT
+    cast(hour as int),
+    sum(sessions) as sessions
+  FROM ", catalog, schema, "ees_ga4_hourly
+  GROUP BY hour
   ORDER BY hour;
-")) |> 
+")) |>
   collect() |>
   filter(!is.na(hour))
 

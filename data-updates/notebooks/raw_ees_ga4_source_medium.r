@@ -72,7 +72,7 @@ previous_data <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", table_name)) %>% c
 latest_data <- ga_data(
   369420610,
   metrics = c(
-    "totalUsers","newUsers", "screenPageViews","sessions", "userEngagementDuration", "bounceRate"
+    "totalUsers", "newUsers", "screenPageViews", "sessions", "userEngagementDuration", "bounceRate"
   ),
   dimensions = c("date", "pagePath", "sessionSource", "sessionMedium"),
   date_range = c(changes_since, changes_to),
@@ -80,7 +80,7 @@ latest_data <- ga_data(
 ) |>
   dplyr::rename("pageviews" = screenPageViews) |>
   dplyr::rename("users" = totalUsers) |>
-  mutate('avgTimeOnPage' = userEngagementDuration / pageviews)
+  mutate("avgTimeOnPage" = userEngagementDuration / pageviews)
 
 
 # COMMAND ----------

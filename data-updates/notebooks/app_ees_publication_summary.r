@@ -10,7 +10,7 @@ lapply(packages, library, character.only = TRUE)
 ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_page"
 ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_page"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_release_pageviews"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_summary"
 
 sc <- spark_connect(method = "databricks")
 
@@ -54,7 +54,7 @@ expected_dates <- seq(as.Date(dates$all_time_date), max(dates$latest_date), by =
 expected_publications <- data.frame(publication = scraped_publications$title)
 
 expected_df <- expand.grid(
-  date = expected_dates, 
+  date = expected_dates,
   publication = unique(str_to_title(expected_publications$publication))
 )
 
@@ -86,9 +86,9 @@ joined_data <- filtered_data |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
   rename("publication" = title) |>
   # this drops a raft of dodgy URLs like '/find-statistics/school-workforce-in-england)'
-  filter(!is.na(publication)) |> 
-  select(date, pagePath, publication, pageviews, sessions) 
-  
+  filter(!is.na(publication)) |>
+  select(date, pagePath, publication, pageviews, sessions)
+
 pub_agg_data <- joined_data |>
   group_by(date, publication) |>
   summarise(
@@ -130,14 +130,14 @@ tables_created <- sparklyr::sdf_sql(sc, "SELECT date, publication, SUM(eventCoun
 
 # COMMAND ----------
 
-with_event_totals <- expected_df |> 
+with_event_totals <- expected_df |>
   left_join(pub_agg_data, by = c("publication" = "publication", "date" = "date")) |>
   left_join(session_start_events, by = c("publication" = "publication", "date" = "date")) |>
   left_join(accordion_events, by = c("publication" = "publication", "date" = "date")) |>
   left_join(download_events, by = c("publication" = "publication", "date" = "date")) |>
   left_join(featured_table_events, by = c("publication" = "publication", "date" = "date")) |>
   left_join(search_events, by = c("publication" = "publication", "date" = "date")) |>
-  left_join(tables_created, by = c("publication" = "publication", "date" = "date")) 
+  left_join(tables_created, by = c("publication" = "publication", "date" = "date"))
 
 # COMMAND ----------
 

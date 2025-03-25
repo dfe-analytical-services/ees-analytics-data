@@ -18,8 +18,8 @@ sc <- spark_connect(method = "databricks")
 
 # MAGIC %md
 # MAGIC NOTE:
-# MAGIC We originally thought the 'Publication and Subject chosen event tracked the firs ttwo steps of the table tool only and 'Table Created' was tracking the final create table button (so successful journies through table tool). This doesn't seem to be the case as the numbers are suspiciously similar across the two categories (exactly the same in most cases). 
-# MAGIC Current working assumption is they both trigger when a table is displayed, but the 'Publication and Sugbject' chosen event logs more information. 
+# MAGIC We originally thought the 'Publication and Subject chosen event tracked the firs ttwo steps of the table tool only and 'Table Created' was tracking the final create table button (so successful journies through table tool). This doesn't seem to be the case as the numbers are suspiciously similar across the two categories (exactly the same in most cases).
+# MAGIC Current working assumption is they both trigger when a table is displayed, but the 'Publication and Sugbject' chosen event logs more information.
 # MAGIC I'll use the Publication and Subject chosen event here.
 # MAGIC
 # MAGIC For table creation via table tool events in GA4 we need:
@@ -115,7 +115,7 @@ test_that("There are no missing dates since we started", {
 tables_created <- tables_created %>%
   mutate(page_type = case_when(
     str_detect(pagePath, "find-statistics") ~ "Release page",
-    str_detect(eventCategory , "Table Tool") ~ "Table tool",
+    str_detect(eventCategory, "Table Tool") ~ "Table tool",
     TRUE ~ "NA"
   ))
 
@@ -144,16 +144,18 @@ tables_created <- tables_created |>
   mutate(slug = str_remove_all(slug, "[^a-zA-Z0-9-]")) |>
   mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
-  mutate(publication = ifelse(slug == "fast-track", 
-                              sub("/.*", "", eventLabel), 
-                              title)) |>
-  mutate(publication = ifelse(pagePath == "/data-tables", 
-                              sub("/.*", "", eventLabel), 
-                              publication)) |>                            
+  mutate(publication = ifelse(slug == "fast-track",
+    sub("/.*", "", eventLabel),
+    title
+  )) |>
+  mutate(publication = ifelse(pagePath == "/data-tables",
+    sub("/.*", "", eventLabel),
+    publication
+  )) |>
   mutate(publication = str_trim(publication, side = "both")) |>
   mutate(publication = str_to_title(publication))
 
-  tables_created <- tables_created %>%
+tables_created <- tables_created %>%
   mutate(publication = case_when(
     publication == "Characteristics of Children in Need" ~ "Children In Need",
     publication == "Characteristics Of Children In Need" ~ "Children In Need",
@@ -184,14 +186,14 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# going to aggregate and store at publication level for now, can unpick later if needed 
+# going to aggregate and store at publication level for now, can unpick later if needed
 tables_created <- tables_created %>%
   select(date, page_type, publication, eventLabel, eventCount) %>%
   filter(!is.na(publication)) %>%
   group_by(date, page_type, publication, eventLabel) %>%
   summarise(
     eventCount = sum(eventCount)
-  ) 
+  )
 
 # COMMAND ----------
 

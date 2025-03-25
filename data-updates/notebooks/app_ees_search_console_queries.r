@@ -24,16 +24,18 @@ sc <- spark_connect(method = "databricks")
 
 # DBTITLE 1,Pull in raw data
 full_data <- sparklyr::sdf_sql(
-  sc, paste("
+  sc, paste(
+    "
     SELECT query, pagePath, sum(clicks) as clicks, sum(impressions) as impressions FROM", search_console_table_name,
     "WHERE date >= DATE_SUB(CURRENT_DATE(), 365)
     GROUP BY query, pagePath;
-  ")
+  "
+  )
 ) %>% collect()
 
 # COMMAND ----------
 
-scraped_publications <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", scrape_table_name)) |> 
+scraped_publications <- sparklyr::sdf_sql(sc, paste("SELECT * FROM", scrape_table_name)) |>
   collect()
 
 slugs <- unique(scraped_publications$slug)
@@ -64,7 +66,7 @@ joined_data <- filtered_data |>
 
 pub_queries_clicks <- data.frame()
 
-for(pub in unique(joined_data$publication)){
+for (pub in unique(joined_data$publication)) {
   message("Finding top 10 clicks for ", pub)
   message("Current rows: ", nrow(pub_queries_clicks))
   pub_queries_clicks <- rbind(
@@ -81,7 +83,7 @@ for(pub in unique(joined_data$publication)){
 
 pub_queries_impressions <- data.frame()
 
-for(pub in unique(joined_data$publication)){
+for (pub in unique(joined_data$publication)) {
   message("Finding top 10 impressions for ", pub)
   message("Current rows: ", nrow(pub_queries_impressions))
   pub_queries_impressions <- rbind(
@@ -157,17 +159,21 @@ search_console_old_table_name <- "catalog_40_copper_statistics_services.analytic
 # COMMAND ----------
 
 latest_data <- sparklyr::sdf_sql(
-  sc, paste("
+  sc, paste(
+    "
     SELECT date, SUM(clicks) as clicks, SUM(impressions) as impressions FROM", search_console_table_name,
     "GROUP BY date;
-  ")
+  "
+  )
 )
 
 old_data <- sparklyr::sdf_sql(
-  sc, paste("
+  sc, paste(
+    "
     SELECT date, SUM(clicks) as clicks, SUM(impressions) as impressions FROM", search_console_old_table_name,
     "GROUP BY date;
-  ")
+  "
+  )
 )
 
 combined_data <- union_all(latest_data, old_data) |>

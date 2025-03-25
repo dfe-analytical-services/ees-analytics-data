@@ -75,14 +75,14 @@ test_that("Query dates are valid", {
 # COMMAND ----------
 
 previous_data <- sparklyr::sdf_sql(
-  sc, 
+  sc,
   paste("SELECT * FROM", table_name)
-) |> 
-collect()
+) |>
+  collect()
 
 latest_data <- data.frame()
 
-for(day in seq(changes_since, changes_to, by = "day")){
+for (day in seq(changes_since, changes_to, by = "day")) {
   day <- as.Date(day)
 
   message("Querying for ", day)

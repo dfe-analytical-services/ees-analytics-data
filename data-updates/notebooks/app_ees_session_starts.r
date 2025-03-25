@@ -18,7 +18,7 @@ sc <- spark_connect(method = "databricks")
 
 # MAGIC %md
 # MAGIC
-# MAGIC The session_start event was new for GA4. 
+# MAGIC The session_start event was new for GA4.
 # MAGIC
 # MAGIC **eventName**
 # MAGIC
@@ -29,7 +29,7 @@ sc <- spark_connect(method = "databricks")
 # MAGIC **eventCategory** in not set so not needed
 # MAGIC
 # MAGIC NOTE:
-# MAGIC We don't have an equivalent event for universal analytics. 
+# MAGIC We don't have an equivalent event for universal analytics.
 # MAGIC
 
 # COMMAND ----------
@@ -37,8 +37,8 @@ sc <- spark_connect(method = "databricks")
 # DBTITLE 1,Join the tables together and filter to just accordion relevant events
 session_starts <- sparklyr::sdf_sql(
   sc, paste("
-      SELECT 
-      date, 
+      SELECT
+      date,
       pagePath,
       eventName,
       sum(eventCount) as eventCount
@@ -91,15 +91,15 @@ session_starts <- session_starts %>%
     str_detect(pagePath, "/glossary") ~ "Glossary",
     str_detect(pagePath, "/cookies") ~ "Cookies",
     str_detect(pagePath, "/") ~ "Homepage",
-    TRUE ~ 'NA'
+    TRUE ~ "NA"
   ))
 
 # COMMAND ----------
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
-    expect_true(nrow(session_starts %>% filter(page_type =='NA')) == 0)
-    })
+  expect_true(nrow(session_starts %>% filter(page_type == "NA")) == 0)
+})
 
 # COMMAND ----------
 
@@ -137,7 +137,7 @@ test_that("There are no missing dates since we started", {
 
 # selecting just the columns we're interested in storing
 session_starts <- session_starts %>%
-select(date, pagePath, page_type, publication, eventCount)
+  select(date, pagePath, page_type, publication, eventCount)
 
 # COMMAND ----------
 
@@ -170,7 +170,7 @@ print_changes_summary(temp_table_data, previous_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following table
 # MAGIC
 # MAGIC - **date**: The date the session started (earliest date 22/06/2023)
 # MAGIC - **pagePath**: The pagePath where the session started

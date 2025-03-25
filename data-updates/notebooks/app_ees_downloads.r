@@ -247,11 +247,11 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Publication not populated for (and therefore downloads are not counted in publication table) 
+# MAGIC Publication not populated for (and therefore downloads are not counted in publication table)
 # MAGIC - Any fast-track links (need EES database context to help with those)
 # MAGIC - permalinks
-# MAGIC  - publications that are too long for the event label to be usable (eventLabel = 
-# MAGIC      - 'Publication: Outcomes for Children in Need, Including Children Looked After by Local Authorities in ' 
+# MAGIC  - publications that are too long for the event label to be usable (eventLabel =
+# MAGIC      - 'Publication: Outcomes for Children in Need, Including Children Looked After by Local Authorities in '
 # MAGIC     - 'Publication: Attendance in Education and Early Years Settings During the Coronavirus (COVID-19) Pand'
 # MAGIC     - 'Publication: FE Learners Going Into Employment and Learning Destinations by Local Authority District')
 # MAGIC
@@ -259,14 +259,14 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting just the columns we're interested in storing and creating a publication search events table 
+# selecting just the columns we're interested in storing and creating a publication search events table
 publication_downloads <- downloads %>%
   select(date, publication, page_type, download_type, eventLabel, eventCount) %>%
   filter(!is.na(publication)) %>%
   group_by(date, publication, page_type, download_type, eventLabel) %>%
   summarise(
     eventCount = sum(eventCount),
-    .groups = 'keep'
+    .groups = "keep"
   )
 
 # COMMAND ----------
@@ -277,7 +277,7 @@ service_downloads <- downloads %>%
   group_by(date, page_type, download_type, eventLabel) %>%
   summarise(
     eventCount = sum(eventCount),
-    .groups = 'keep'
+    .groups = "keep"
   )
 
 # COMMAND ----------
@@ -343,7 +343,7 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # MAGIC **Table 1: Publication level**
 # MAGIC For everything I'm able to identify the publication details for
 # MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
-# MAGIC - **publication**: The publication title 
+# MAGIC - **publication**: The publication title
 # MAGIC - **page_type**: Type of service page (Release page, Data catalogue)
 # MAGIC - **download_type**: Type of download (csv, ods, all files, etc.)
 # MAGIC - **eventLabel**: The info we have for what file was downloaded (this often includes the relevant publication too, though it is truncated unhelpfully)

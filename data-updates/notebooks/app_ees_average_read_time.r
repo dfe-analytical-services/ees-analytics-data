@@ -9,7 +9,7 @@
 # DBTITLE 1,Load dependencies
 source("utils.R")
 
-packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow", "stringr", "httr2" , "rvest", "purrr")
+packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow", "stringr", "httr2", "rvest", "purrr")
 
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
@@ -22,7 +22,7 @@ sc <- spark_connect(method = "databricks")
 # COMMAND ----------
 
 # DBTITLE 1,Pull in expected slugs
-raw_publication_scrape <- sparklyr::sdf_sql(sc, paste("SELECT slug, title FROM ", scrape_table_name)) %>% 
+raw_publication_scrape <- sparklyr::sdf_sql(sc, paste("SELECT slug, title FROM ", scrape_table_name)) %>%
   collect() |>
   mutate(title = str_to_title(title))
 
@@ -95,7 +95,7 @@ get_average_read_time <- function(pub_slug) {
     paste(collapse = " ")
 
   word_count <- content |>
-    strsplit("\\s+")  |>
+    strsplit("\\s+") |>
     unlist(use.names = FALSE) |>
     length()
 
@@ -107,7 +107,7 @@ get_average_read_time <- function(pub_slug) {
     # discount the official stats logo
     purrr::discard(~ rvest::html_attr(.x, "src") == "/assets/images/accredited-official-statistics-logo.svg") |>
     length()
-  
+
   data_block_count <- 0 # TODO: Work out a way to pull from database
   chart_count <- 0 # TODO: Work out a way to pull from database
 
@@ -161,15 +161,21 @@ new_table_titles_with_data <- avg_read_time_table |>
   unique()
 
 testthat::test_that("All publication titles from the original scrape have a row in the new table", {
-  expect_true(all(original_titles %in% new_table_titles), 
-               info = paste("Missing titles:", 
-                            toString(original_titles[!original_titles %in% new_table_titles])))
+  expect_true(all(original_titles %in% new_table_titles),
+    info = paste(
+      "Missing titles:",
+      toString(original_titles[!original_titles %in% new_table_titles])
+    )
+  )
 })
 
 testthat::test_that("All publication titles have an average reading time", {
-  expect_true(all(original_titles %in% new_table_titles_with_data), 
-               info = paste("Missing titles:", 
-                            toString(original_titles[!original_titles %in% new_table_titles_with_data])))
+  expect_true(all(original_titles %in% new_table_titles_with_data),
+    info = paste(
+      "Missing titles:",
+      toString(original_titles[!original_titles %in% new_table_titles_with_data])
+    )
+  )
 })
 
 # COMMAND ----------

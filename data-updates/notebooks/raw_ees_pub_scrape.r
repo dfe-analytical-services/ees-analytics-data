@@ -101,7 +101,7 @@ test_that("Number of rows is more than find stats results", {
 # MAGIC
 # MAGIC Will add these as rows manually to end of combined_scrape
 # MAGIC
-# MAGIC got another - 
+# MAGIC got another -
 # MAGIC - neet-age-16-to-24 / NEET age 16 to 24
 # MAGIC - level-2-and-3-attainment-age-16-25 / Level 2 and 3 attainment age 16 to 25
 # MAGIC - level-2-and-3-attainment-by-young-people / Level 2 and 3 attainment age 16 to 25
@@ -115,7 +115,7 @@ new_rows <- data.frame(
     "pupil-exclusion-statistics",
     "further-education-and-skills-statistics",
     "level-2-and-3-attainment-age-16-to-25",
-    "level-2-and-3-attainment-age-16-25"
+    "level-2-and-3-attainment-age-16-25",
     "education-provision-children-under-5-years-of-age",
     "school-admission-appeals-in-england",
     "children-accommodated-in-secure-children-s-homes",

@@ -18,16 +18,16 @@ sc <- spark_connect(method = "databricks")
 # COMMAND ----------
 
 # DBTITLE 1,Read in and check table integrity
-# Have to do the group by to avoid duplicates because of the change over day. It's not ideal for avgtimeonpage or bouncerate but given the imact is just on that day I'm not going to worry too much about it for now. 
+# Have to do the group by to avoid duplicates because of the change over day. It's not ideal for avgtimeonpage or bouncerate but given the imact is just on that day I'm not going to worry too much about it for now.
 
 full_data <- sparklyr::sdf_sql(sc, paste("
-  SELECT 
+  SELECT
    date, pagePath, source, medium, SUM(pageviews) as pageviews, SUM(sessions) as sessions, AVG(avgTimeOnPage) as avgTimeOnPage, AVG(bounceRate) as bounceRate
   FROM (
-    SELECT 
+    SELECT
     date, pagePath, source, medium, pageviews, sessions, avgTimeOnPage, bounceRate FROM", ua_table_name, "
     UNION ALL
-    SELECT 
+    SELECT
     date, pagePath, sessionSource as source, sessionMedium as medium, pageviews, sessions, avgTimeOnPage, bounceRate FROM", ga4_table_name, "
   ) AS combined_data
   GROUP BY date, pagePath, source, medium
@@ -71,7 +71,7 @@ full_data <- full_data %>%
     str_detect(pagePath, "/glossary") ~ "Glossary",
     str_detect(pagePath, "/cookies") ~ "Cookies",
     str_detect(pagePath, "/") ~ "Homepage",
-    TRUE ~ 'NA'
+    TRUE ~ "NA"
   ))
 
 # COMMAND ----------
@@ -113,20 +113,20 @@ service_source_medium <- joined_data %>%
   summarise(
     pageviews = sum(pageviews),
     sessions = sum(sessions),
-    .groups = 'keep'
+    .groups = "keep"
   )
 
 # COMMAND ----------
 
 # selecting just the columns we're interested in storing and creating a service level table
 publication_source_medium <- joined_data %>%
-  filter(page_type == 'Release page') %>%
+  filter(page_type == "Release page") %>%
   select(date, publication, source, medium, pageviews, sessions) %>%
   group_by(date, publication, source, medium) %>%
   summarise(
     pageviews = sum(pageviews),
     sessions = sum(sessions),
-    .groups = 'keep'
+    .groups = "keep"
   )
 
 # COMMAND ----------
@@ -187,7 +187,7 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC NOTE: 
+# MAGIC NOTE:
 # MAGIC
 # MAGIC Remember if aggregating up from this level avgtimeonpage and bouncerate will no longer be accurate. To aggregate and have an accurate time on page we'd need to shorten time series to just GA4 data
 
