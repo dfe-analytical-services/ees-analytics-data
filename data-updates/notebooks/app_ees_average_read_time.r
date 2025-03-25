@@ -128,10 +128,21 @@ get_average_read_time <- function(pub_slug) {
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC Made an arbitrary call to filter to the highest value for any given publication, in the app we can only have one value, and highest was the easiest way to avoid null, as well as probably making the point that we should reduce our content better. Could be a fancier way to do this in future though to recongise which slug is the 'right' one.
+# MAGIC
+# MAGIC In practice, multiple values are mostly created by the many to one relationship of slugs to title, where you have a publication that has been renamed so has multiple potential historical slugs that all redirect. The times are the same so not one to worry about.
+
+# COMMAND ----------
+
 # DBTITLE 1,Do the scrape to calculate page times
 avg_read_time_table <- purrr::map_dfr(unique(raw_publication_scrape$slug), get_average_read_time) |>
   left_join(raw_publication_scrape, by = "slug") |>
-  filter(!is.na(avg_read_time))
+  filter(!is.na(avg_read_time)) |>
+  group_by(title) |>
+  filter(avg_read_time == max(avg_read_time, na.rm = TRUE)) |>
+  slice(1) |>
+  ungroup()
 
 # COMMAND ----------
 
@@ -150,6 +161,7 @@ testthat::test_that("We have equal numbers of scrape pages to titles", {
 })
 testthat::test_that("Check final table for duplicate publication rows", {
   expect_equal(nrow(avg_read_time_table), nrow(dplyr::distinct(avg_read_time_table)))
+  expect_equal(avg_read_time_table$title, unique(avg_read_time_table$title))
 })
 
 # COMMAND ----------
