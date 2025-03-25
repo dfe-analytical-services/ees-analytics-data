@@ -137,7 +137,8 @@ with_event_totals <- expected_df |>
   left_join(download_events, by = c("publication" = "publication", "date" = "date")) |>
   left_join(featured_table_events, by = c("publication" = "publication", "date" = "date")) |>
   left_join(search_events, by = c("publication" = "publication", "date" = "date")) |>
-  left_join(tables_created, by = c("publication" = "publication", "date" = "date"))
+  left_join(tables_created, by = c("publication" = "publication", "date" = "date")) |>
+  mutate(across(everything(), ~replace_na(.x, 0)))
 
 # COMMAND ----------
 
