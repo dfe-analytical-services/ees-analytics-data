@@ -2,7 +2,7 @@
 # DBTITLE 1,Load dependencies
 source("utils.R")
 
-packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow", "stringr", "TTR")
+packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow", "stringr")
 
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
@@ -35,14 +35,6 @@ test_that("No duplicate rows", {
 test_that("Data has no missing values", {
   expect_false(any(is.na(sql_data)))
 })
-
-# Create rolling averages (simple moving average)
-aggregated_data <- aggregated_data %>%
-  arrange(date) %>%
-  mutate(
-    pageviews_avg7 = TTR::SMA(pageviews, n = 7),
-    sessions_avg7 = TTR::SMA(sessions, n = 7)    
-  )
 
 dates <- create_dates(max(sql_data$date))
 
