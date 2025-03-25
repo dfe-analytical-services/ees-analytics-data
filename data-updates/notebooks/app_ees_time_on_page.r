@@ -27,7 +27,7 @@ sc <- spark_connect(method = "databricks")
 
 full_data <- sparklyr::sdf_sql(sc, paste("
     SELECT
-    date, pagePath, pageviews, sessions, userEngagementDuration FROM", ga4_table_name, "
+    date, pagePath, pageviews, sessions, userEngagementDuration, total_session_starts FROM", ga4_table_name, "
     ORDER BY date DESC
 ")) %>% collect()
 
@@ -221,3 +221,4 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # MAGIC    - pageviews
 # MAGIC    - sessions
 # MAGIC    - engagementDuration
+# MAGIC    - total_session_starts
