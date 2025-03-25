@@ -17,7 +17,7 @@ packages <- c(
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
 
-table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_source_medium"
+table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_device_browser"
 
 sc <- spark_connect(method = "databricks")
 
@@ -32,7 +32,7 @@ ga_auth(json = auth_path)
 dbExecute(sc, paste(
   "CREATE TABLE IF NOT EXISTS",
   table_name,
-  "(date DATE, pagePath STRING, sessionSource STRING, sessionMedium STRING, users DOUBLE,",
+  "(date DATE, pagePath STRING, deviceCategory STRING, browser STRING, users DOUBLE,",
   "newUsers DOUBLE, pageviews DOUBLE, sessions DOUBLE, userEngagementDuration DOUBLE, avgTimeOnPage DOUBLE,",
   "bounceRate DOUBLE)"
 ))
@@ -74,7 +74,7 @@ latest_data <- ga_data(
   metrics = c(
     "totalUsers","newUsers", "screenPageViews","sessions", "userEngagementDuration", "bounceRate"
   ),
-  dimensions = c("date", "pagePath", "sessionSource", "sessionMedium"),
+  dimensions = c("date", "pagePath", "deviceCategory", "browser"),
   date_range = c(changes_since, changes_to),
   limit = -1
 ) |>
@@ -89,8 +89,6 @@ latest_data <- ga_data(
 test_that("Col names match", {
   expect_equal(names(latest_data), names(previous_data))
 })
-
-
 
 # COMMAND ----------
 

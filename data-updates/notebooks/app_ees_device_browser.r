@@ -7,11 +7,11 @@ packages <- c("sparklyr", "DBI", "dplyr", "testthat", "arrow", "stringr")
 install_if_needed(packages)
 lapply(packages, library, character.only = TRUE)
 
-ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_source_medium"
-ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_source_medium"
+ga4_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_device_browser"
+ua_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_device_browser"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_service_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service_source_medium"
-write_publication_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_source_medium"
+write_service_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service_device_browser"
+write_publication_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_device_browser"
 
 sc <- spark_connect(method = "databricks")
 
@@ -22,15 +22,15 @@ sc <- spark_connect(method = "databricks")
 
 full_data <- sparklyr::sdf_sql(sc, paste("
   SELECT 
-   date, pagePath, source, medium, SUM(pageviews) as pageviews, SUM(sessions) as sessions, AVG(avgTimeOnPage) as avgTimeOnPage, AVG(bounceRate) as bounceRate
+   date, pagePath, device, browser, SUM(pageviews) as pageviews, SUM(sessions) as sessions, AVG(avgTimeOnPage) as avgTimeOnPage, AVG(bounceRate) as bounceRate
   FROM (
     SELECT 
-    date, pagePath, source, medium, pageviews, sessions, avgTimeOnPage, bounceRate FROM", ua_table_name, "
+    date, pagePath, deviceCategory as device, browser, pageviews, sessions, avgTimeOnPage, bounceRate FROM", ua_table_name, "
     UNION ALL
     SELECT 
-    date, pagePath, sessionSource as source, sessionMedium as medium, pageviews, sessions, avgTimeOnPage, bounceRate FROM", ga4_table_name, "
+    date, pagePath, deviceCategory as device, browser, pageviews, sessions, avgTimeOnPage, bounceRate FROM", ga4_table_name, "
   ) AS combined_data
-  GROUP BY date, pagePath, source, medium
+  GROUP BY date, pagePath, device, browser
   ORDER BY date DESC
 ")) %>% collect()
 
@@ -59,7 +59,6 @@ full_data <- full_data %>%
     str_detect(pagePath, "/data-guidance") ~ "Data guidance",
     str_detect(pagePath, "/prerelease-access-list") ~ "Pre-release access",
     str_detect(pagePath, "/find-statistics/") ~ "Release page",
-    str_detect(pagePath, "/find-statistics/") ~ "Release page",
     str_detect(pagePath, "/find-statistics") ~ "Find stats navigation",
     str_detect(pagePath, "/data-catalogue/data-set") ~ "Data catalogue dataset",
     str_detect(pagePath, "/data-catalogue") ~ "Data catalogue navigation",
@@ -73,6 +72,12 @@ full_data <- full_data %>%
     str_detect(pagePath, "/") ~ "Homepage",
     TRUE ~ 'NA'
   ))
+
+# COMMAND ----------
+
+test_that("There are no events without a page type classification", {
+    expect_true(nrow(full_data %>% filter(page_type =='NA')) == 0)
+    })
 
 # COMMAND ----------
 
@@ -107,9 +112,9 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # selecting just the columns we're interested in storing and creating a service level table
-service_source_medium <- joined_data %>%
-  select(date, page_type, source, medium, pageviews, sessions) %>%
-  group_by(date, page_type, source, medium) %>%
+service_device_browser <- joined_data %>%
+  select(date, page_type, device, browser, pageviews, sessions) %>%
+  group_by(date, page_type, device, browser) %>%
   summarise(
     pageviews = sum(pageviews),
     sessions = sum(sessions),
@@ -119,10 +124,10 @@ service_source_medium <- joined_data %>%
 # COMMAND ----------
 
 # selecting just the columns we're interested in storing and creating a service level table
-publication_source_medium <- joined_data %>%
+publication_device_browser <- joined_data %>%
   filter(page_type == 'Release page') %>%
-  select(date, publication, source, medium, pageviews, sessions) %>%
-  group_by(date, publication, source, medium) %>%
+  select(date, publication, device, browser, pageviews, sessions) %>%
+  group_by(date, publication, device, browser) %>%
   summarise(
     pageviews = sum(pageviews),
     sessions = sum(sessions),
@@ -132,7 +137,7 @@ publication_source_medium <- joined_data %>%
 # COMMAND ----------
 
 # DBTITLE 1,Write out app data
-updated_service_spark_df <- copy_to(sc, service_source_medium, overwrite = TRUE)
+updated_service_spark_df <- copy_to(sc, service_device_browser, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_service_spark_df, paste0(write_service_table_name, "_temp"), mode = "overwrite")
@@ -148,7 +153,7 @@ previous_service_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(nrow(temp_service_table_data), nrow(service_source_medium))
+  expect_equal(nrow(temp_service_table_data), nrow(service_device_browser))
 })
 
 # Replace the old table with the new one
@@ -159,7 +164,7 @@ print_changes_summary(temp_service_table_data, previous_service_data)
 
 # COMMAND ----------
 
-updated_publication_spark_df <- copy_to(sc, publication_source_medium, overwrite = TRUE)
+updated_publication_spark_df <- copy_to(sc, publication_device_browser, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_publication_spark_df, paste0(write_publication_table_name, "_temp"), mode = "overwrite")
@@ -175,7 +180,7 @@ previous_publication_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(nrow(temp_publication_table_data), nrow(publication_source_medium))
+  expect_equal(nrow(temp_publication_table_data), nrow(publication_device_browser))
 })
 
 # Replace the old table with the new one
@@ -189,11 +194,12 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # MAGIC %md
 # MAGIC NOTE: 
 # MAGIC
-# MAGIC Remember if aggregating up from this level avgtimeonpage and bouncerate will no longer be accurate. To aggregate and have an accurate time on page we'd need to shorten time series to just GA4 data
+# MAGIC Remember if aggregating up from pagePath level avgtimeonpage and bouncerate will no longer be accurate. To aggregate and have an accurate time on page we'd need to shorten time series to just GA4 data and for bounce rate we'd need to rerun the query at the right level. 
 
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC
 # MAGIC **Note:**
 # MAGIC
 # MAGIC We are left with two tables:
@@ -202,8 +208,8 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # MAGIC    For release pages only.
 # MAGIC    - date
 # MAGIC    - publication
-# MAGIC    - source
-# MAGIC    - medium
+# MAGIC    - device
+# MAGIC    - browser
 # MAGIC    - pageviews
 # MAGIC    - sessions
 # MAGIC
@@ -211,7 +217,7 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # MAGIC    For all service pages.
 # MAGIC    - date
 # MAGIC    - page_type
-# MAGIC    - source
-# MAGIC    - medium
+# MAGIC    - device
+# MAGIC    - browser
 # MAGIC    - pageviews
 # MAGIC    - sessions
