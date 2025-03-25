@@ -36,7 +36,8 @@ aggregated_data <- aggregated_data %>%
   arrange(date) %>%
   mutate(
     pageviews_avg7 = TTR::SMA(pageviews, n = 7),
-    sessions_avg7 = TTR::SMA(sessions, n = 7)    
+    sessions_avg7 = TTR::SMA(sessions, n = 7),
+    pagesPerSession = pageviews / sessions    
   )
 
 test_that("No duplicate rows", {
