@@ -162,7 +162,9 @@ featured_table_events <- featured_table_events %>%
   summarise(
     eventCount = sum(eventCount),
     .groups = "keep"
-  )
+  ) |>
+  ungroup() |>
+  mutate(eventLabel = str_remove(eventLabel, "Featured Table Name: "))
 
 # COMMAND ----------
 

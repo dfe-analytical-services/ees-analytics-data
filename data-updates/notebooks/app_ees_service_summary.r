@@ -32,12 +32,14 @@ aggregated_data <- sparklyr::sdf_sql(
 ) %>% collect()
 
 # Create rolling averages (simple moving average)
+# Using standard R round as dfeR was taking >10 mins to install, and the precision isn't too important
 aggregated_data <- aggregated_data %>%
   arrange(date) %>%
   mutate(
-    pageviews_avg7 = TTR::SMA(pageviews, n = 7),
-    sessions_avg7 = TTR::SMA(sessions, n = 7),
-    pagesPerSession = pageviews / sessions
+    pageviews_avg7 = round(TTR::SMA(pageviews, n = 7), 1),
+    sessions_avg7 = round(TTR::SMA(sessions, n = 7), 1),
+    pagesPerSession = round(pageviews / sessions, 1),
+    averageSessionDuration = round(averageSessionDuration, 1)
   )
 
 test_that("No duplicate rows", {
