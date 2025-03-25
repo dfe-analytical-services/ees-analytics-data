@@ -10,7 +10,8 @@ lapply(packages, library, character.only = TRUE)
 ga4_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_events"
 ua_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_events"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_search_events"
+write_service_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service_search_events"
+write_publication_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_search_events"
 
 sc <- spark_connect(method = "databricks")
 
@@ -183,24 +184,41 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting just the columns we're interested in storing
-# TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
+# selecting just the columns we're interested in storing and creating a publication search events table 
 
-search_events <- search_events %>%
-select(date, pagePath, page_type, publication, eventLabel, eventCount)
+publication_search_events <- search_events %>%
+  select(date, page_type, publication, eventLabel, eventCount) %>%
+  filter(page_type == 'Release page' | page_type == 'Methodology pages') %>%
+  group_by(date, page_type, publication, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount),
+    .groups = 'keep'
+  )
 
 # COMMAND ----------
 
-# DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, search_events, overwrite = TRUE)
+# selecting just the columns we're interested in storing and creating a service search events table
+
+service_search_events <- search_events %>%
+select(date, page_type, eventLabel, eventCount) %>%
+filter(page_type %in% c('Glossary', 'Data catalogue', 'Table tool', 'Find stats', 'Methodology nav')) %>%
+  group_by(date, page_type, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount),
+    .groups = 'keep'
+  )
+
+# COMMAND ----------
+
+updated_service_spark_df <- copy_to(sc, service_search_events, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
-spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
+spark_write_table(updated_service_spark_df, paste0(write_service_table_name, "_temp"), mode = "overwrite")
 
-temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name, "_temp")) %>% collect()
-previous_data <- tryCatch(
+temp_service_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name, "_temp")) %>% collect()
+previous_service_data <- tryCatch(
   {
-    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name)) %>% collect()
   },
   error = function(e) {
     NULL
@@ -208,24 +226,61 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, search_events)
+  expect_equal(nrow(temp_service_table_data), nrow(service_search_events))
 })
 
 # Replace the old table with the new one
-dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_table_name))
-dbExecute(sc, paste0("ALTER TABLE ", write_table_name, "_temp RENAME TO ", write_table_name))
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_service_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_service_table_name, "_temp RENAME TO ", write_service_table_name))
 
-print_changes_summary(temp_table_data, previous_data)
+print_changes_summary(temp_service_table_data, previous_service_data)
+
+# COMMAND ----------
+
+# DBTITLE 1,Write out app data
+updated_publication_spark_df <- copy_to(sc, publication_search_events, overwrite = TRUE)
+
+# Write to temp table while we confirm we're good to overwrite data
+spark_write_table(updated_publication_spark_df, paste0(write_publication_table_name, "_temp"), mode = "overwrite")
+
+temp_publication_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name, "_temp")) %>% collect()
+previous_publication_data <- tryCatch(
+  {
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name)) %>% collect()
+  },
+  error = function(e) {
+    NULL
+  }
+)
+
+test_that("Temp table data matches updated data", {
+  expect_equal(nrow(temp_publication_table_data), nrow(publication_search_events))
+})
+
+# Replace the old table with the new one
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_publication_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_publication_table_name, "_temp RENAME TO ", write_publication_table_name))
+
+print_changes_summary(temp_publication_table_data, previous_publication_data)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following tables:
 # MAGIC
-# MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
-# MAGIC - **page_type**: Type of service page (Release page, Data catalogue, glossary etc)
+# MAGIC ### Publication Table
+# MAGIC Release and methodology pages only.
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
 # MAGIC - **publication**: The publication title (relevant for pages that have an associated publication only)
+# MAGIC - **page_type**: Type of service page (Release page, Methodology pages)
 # MAGIC - **eventLabel**: The search term used
-# MAGIC - **eventCount**: The number of searches for that term on given day
+# MAGIC - **eventCount**: The number of searches for that term on a given day
+# MAGIC
+# MAGIC ### Service Table
+# MAGIC All other page types / service pages
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
+# MAGIC - **page_type**: Type of service page (Data catalogue, glossary, etc)
+# MAGIC - **eventLabel**: The search term used
+# MAGIC - **eventCount**: The number of searches for that term on a given day
+# MAGIC
 # MAGIC

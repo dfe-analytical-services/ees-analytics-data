@@ -10,7 +10,8 @@ lapply(packages, library, character.only = TRUE)
 ga4_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_events"
 ua_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_events"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_accordions"
+write_service_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_service_accordions"
+write_publication_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_accordions"
 
 sc <- spark_connect(method = "databricks")
 
@@ -179,16 +180,42 @@ select(date, pagePath, page_type, publication, eventLabel, eventCount)
 
 # COMMAND ----------
 
-# DBTITLE 1,Write out app data
-updated_spark_df <- copy_to(sc, accordion_events, overwrite = TRUE)
+# selecting just the columns we're interested in storing and creating a publication accordion events table 
+
+publication_accordion_events <- accordion_events %>%
+  select(date, page_type, publication, eventLabel, eventCount) %>%
+  filter(page_type == 'Release page' | page_type == 'Methodology') %>%
+  group_by(date, page_type, publication, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount),
+    .groups = 'keep'
+  )
+
+# COMMAND ----------
+
+# selecting just the columns we're interested in storing and creating a service accordion events table
+# not including the 'Old data catalogue' page_type for now
+
+service_accordion_events <- accordion_events %>%
+select(date, page_type, eventLabel, eventCount) %>%
+filter(page_type %in% c('Glossary', 'Table tool', 'Find stats navigation', 'Methodology navigation')) %>%
+  group_by(date, page_type, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount),
+    .groups = 'keep'
+  )
+
+# COMMAND ----------
+
+updated_publication_spark_df <- copy_to(sc, publication_accordion_events, overwrite = TRUE)
 
 # Write to temp table while we confirm we're good to overwrite data
-spark_write_table(updated_spark_df, paste0(write_table_name, "_temp"), mode = "overwrite")
+spark_write_table(updated_publication_spark_df, paste0(write_publication_table_name, "_temp"), mode = "overwrite")
 
-temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name, "_temp")) %>% collect()
-previous_data <- tryCatch(
+temp_publication_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name, "_temp")) %>% collect()
+previous_publication_data <- tryCatch(
   {
-    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_table_name)) %>% collect()
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_publication_table_name)) %>% collect()
   },
   error = function(e) {
     NULL
@@ -196,24 +223,59 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, accordion_events)
+  expect_equal(nrow(temp_publication_table_data), nrow(publication_accordion_events))
 })
 
 # Replace the old table with the new one
-dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_table_name))
-dbExecute(sc, paste0("ALTER TABLE ", write_table_name, "_temp RENAME TO ", write_table_name))
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_publication_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_publication_table_name, "_temp RENAME TO ", write_publication_table_name))
 
-print_changes_summary(temp_table_data, previous_data)
+print_changes_summary(temp_publication_table_data, previous_publication_data)
+
+# COMMAND ----------
+
+# DBTITLE 1,Write out app data
+updated_service_spark_df <- copy_to(sc, service_accordion_events, overwrite = TRUE)
+
+# Write to temp table while we confirm we're good to overwrite data
+spark_write_table(updated_service_spark_df, paste0(write_service_table_name, "_temp"), mode = "overwrite")
+
+temp_service_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name, "_temp")) %>% collect()
+previous_service_data <- tryCatch(
+  {
+    sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", write_service_table_name)) %>% collect()
+  },
+  error = function(e) {
+    NULL
+  }
+)
+
+test_that("Temp table data matches updated data", {
+  expect_equal(nrow(temp_service_table_data), nrow(service_accordion_events))
+})
+
+# Replace the old table with the new one
+dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_service_table_name))
+dbExecute(sc, paste0("ALTER TABLE ", write_service_table_name, "_temp RENAME TO ", write_service_table_name))
+
+print_changes_summary(temp_service_table_data, previous_service_data)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC We're left with the following table 
+# MAGIC We're left with the following tables:
 # MAGIC
-# MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
-# MAGIC - **page_type**: Type of service page (Release page, methoodlogy, glossary etc)
+# MAGIC ### Publication Table
+# MAGIC For all release and methodology pages
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
+# MAGIC - **page_type**: Type of service page (Release page, methodology)
 # MAGIC - **publication**: The publication title (relevant for pages that have an associated publication only)
 # MAGIC - **eventLabel**: The accordion title
-# MAGIC - **eventCount**: The number of accordion click events on given day
+# MAGIC - **eventCount**: The number of accordion click events on a given day
 # MAGIC
+# MAGIC ### Service Table
+# MAGIC For all other page_types
+# MAGIC - **date**: The date the event occurred on (earliest date = 21/04/2021)
+# MAGIC - **page_type**: Type of service page ('Glossary', 'Table tool', 'Find stats navigation', 'Methodology navigation')
+# MAGIC - **eventLabel**: The accordion title
+# MAGIC - **eventCount**: The number of accordion click events on a given day

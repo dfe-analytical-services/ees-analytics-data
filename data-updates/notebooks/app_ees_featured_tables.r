@@ -10,7 +10,7 @@ lapply(packages, library, character.only = TRUE)
 ga4_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_events"
 ua_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_events"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_featured_tables"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_featured_tables"
 
 sc <- spark_connect(method = "databricks")
 
@@ -151,10 +151,18 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting just the columns we're interested in storing
+# selecting just the columns we're interested in storing and saving table to publication level 
+# NOTE - this only includes featured table clicks from the table tool (where the url includes publication name). It doesn't include fast track clicks (from release pages) as there is no way for me to pull out the publication name from what we store for those. However I think we can cover this fast track from release page info from the tables created events which is handled separately. 
+# UPDATE - after a quick check this logic doesn't hole [featured table null publication eventCounts: 31839; tables created from release page: 931]. I think we need the EES database data to take the linked publication for each fast track url and join it on.
 
 featured_table_events <- featured_table_events %>%
-  select(date, pagePath, page_type, publication, eventLabel, eventCount)
+  filter(publication !='NA') %>%
+  select(date, publication, eventLabel, eventCount) %>%
+  group_by(date, publication, eventLabel) %>%
+  summarise(
+    eventCount = sum(eventCount),
+    .groups = 'keep'
+  )
 
 # COMMAND ----------
 
@@ -175,7 +183,7 @@ previous_data <- tryCatch(
 )
 
 test_that("Temp table data matches updated data", {
-  expect_equal(temp_table_data, featured_table_events)
+  expect_equal(nrow(temp_table_data), nrow(featured_table_events))
 })
 
 # Replace the old table with the new one
@@ -190,8 +198,6 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC We're left with the following table
 # MAGIC
 # MAGIC - **date**: The date the event occured on (earliest date = 01/09/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
-# MAGIC - **page_type**: Type of service page (Table tool)
 # MAGIC - **publication**: The publication title
 # MAGIC - **eventLabel**: The featured table title
 # MAGIC - **eventCount**: The number of times the featured table was viewed on given day

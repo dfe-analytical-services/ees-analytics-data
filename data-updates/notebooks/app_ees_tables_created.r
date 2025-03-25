@@ -10,7 +10,7 @@ lapply(packages, library, character.only = TRUE)
 ga4_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ga4_events"
 ua_event_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_ua_events"
 scrape_table_name <- "catalog_40_copper_statistics_services.analytics_raw.ees_pub_scrape"
-write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_tables_created"
+write_table_name <- "catalog_40_copper_statistics_services.analytics_app.ees_publication_tables_created"
 
 sc <- spark_connect(method = "databricks")
 
@@ -144,15 +144,31 @@ tables_created <- tables_created |>
   mutate(slug = str_remove_all(slug, "[^a-zA-Z0-9-]")) |>
   mutate(slug = str_to_lower(slug)) |>
   left_join(scraped_publications, by = c("slug" = "slug")) |>
-  rename("publication" = title) |>
   mutate(publication = ifelse(slug == "fast-track", 
                               sub("/.*", "", eventLabel), 
-                              publication)) |>
+                              title)) |>
   mutate(publication = ifelse(pagePath == "/data-tables", 
                               sub("/.*", "", eventLabel), 
                               publication)) |>                            
   mutate(publication = str_trim(publication, side = "both")) |>
   mutate(publication = str_to_title(publication))
+
+  tables_created <- tables_created %>%
+  mutate(publication = case_when(
+    publication == "Characteristics of Children in Need" ~ "Children In Need",
+    publication == "Characteristics Of Children In Need" ~ "Children In Need",
+    publication == "Graduate Outcomes (LEO): Provider Level Data" ~ "Leo Graduate Outcomes Provider Level Data",
+    publication == "Graduate Outcomes (Leo): Provider Level Data" ~ "Leo Graduate Outcomes Provider Level Data",
+    publication == "Level 2 and 3 Attainment by Young People Aged 19" ~ "Level 2 And 3 Attainment Age 16 To 25",
+    publication == "Level 2 And 3 Attainment By Young People Aged 19" ~ "Level 2 And 3 Attainment Age 16 To 25",
+    publication == "NEET Annual Brief" ~ "Neet Age 16 To 24",
+    publication == "Neet Annual Brief" ~ "Neet Age 16 To 24",
+    publication == "Participation in Education and Training and Employment" ~ "Participation In Education, Training And Employment Age 16 To 18",
+    publication == "Participation In Education And Training And Employment" ~ "Participation In Education, Training And Employment Age 16 To 18",
+    publication == "Attendance In Education And Early Years Settings During The Coronavirus (Covid-19) Outbreak" ~ "Attendance In Education And Early Years Settings During The Coronavirus (Covid-19) Pandemic",
+    publication == "Permanent And Fixed-Period Exclusions In England" ~ "Permanent Exclusions And Suspensions In England",
+    TRUE ~ publication
+  ))
 
 dates <- create_dates(max(tables_created$date))
 
@@ -168,17 +184,10 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-# selecting just the columns of interest
-# TO DO: decide if we only want subsets of page_types in here (e.g make it just about publications or remove defunct pages like data catalogue)
-
-tables_created <- tables_created %>%
-  select(date, pagePath, page_type, publication, eventLabel, eventCount)
-
-
-# COMMAND ----------
-
 # going to aggregate and store at publication level for now, can unpick later if needed 
 tables_created <- tables_created %>%
+  select(date, page_type, publication, eventLabel, eventCount) %>%
+  filter(!is.na(publication)) %>%
   group_by(date, page_type, publication, eventLabel) %>%
   summarise(
     eventCount = sum(eventCount)
@@ -218,7 +227,6 @@ print_changes_summary(temp_table_data, previous_data)
 # MAGIC We're left with the following table
 # MAGIC
 # MAGIC - **date**: The date the event occured on (earliest date = 21/04/2021)
-# MAGIC - **pagePath**: The pagePath the event occured on
 # MAGIC - **page_type**: Type of service page
 # MAGIC - **publication**: The associated publication title
 # MAGIC - **eventLabel**: The info we have for what subject was used to create the table
