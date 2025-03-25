@@ -130,7 +130,8 @@ get_average_read_time <- function(pub_slug) {
 
 # DBTITLE 1,Do the scrape to calculate page times
 avg_read_time_table <- purrr::map_dfr(unique(raw_publication_scrape$slug), get_average_read_time) |>
-  left_join(raw_publication_scrape, by = "slug")
+  left_join(raw_publication_scrape, by = "slug") |>
+  filter(!is.na(avg_read_time))
 
 # COMMAND ----------
 
@@ -147,7 +148,7 @@ successful_scrapes <- avg_read_time_table |>
 testthat::test_that("We have equal numbers of scrape pages to titles", {
   expect_equal(count_raw_pub_titles, count_raw_pub_titles)
 })
-testthat::test_that("Check final table for duplicate rows", {
+testthat::test_that("Check final table for duplicate publication rows", {
   expect_equal(nrow(avg_read_time_table), nrow(dplyr::distinct(avg_read_time_table)))
 })
 
