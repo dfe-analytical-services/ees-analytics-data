@@ -27,7 +27,7 @@ sc <- spark_connect(method = "databricks")
 
 full_data <- sparklyr::sdf_sql(sc, paste("
     SELECT
-    date, pagePath, pageviews, sessions, userEngagementDuration, total_session_starts FROM", ga4_table_name, "
+    date, pagePath, pageviews, sessions, userEngagementDuration FROM", ga4_table_name, "
     ORDER BY date DESC
 ")) %>% collect()
 
@@ -129,21 +129,6 @@ service_time_on_page <- service_time_on_page |>
 
 # COMMAND ----------
 
-# selecting just the columns we're interested in storing and creating a service level table
-publication_time_on_page <- joined_data %>%
-  filter(page_type %in% c("Release page", "Methodology page","Table tool","Data guidance","Pre-release access")) %>% 
-  filter(publication != 'NA') %>%
-  select(date, publication, page_type, pageviews, sessions, userEngagementDuration) %>%
-  group_by(date, publication, page_type, userEngagementDuration) %>%
-  summarise(
-    pageviews = sum(pageviews),
-    sessions = sum(sessions),
-    engagementDuration = sum(userEngagementDuration),
-    .groups = "keep"
-  )
-
-# COMMAND ----------
-
 # DBTITLE 1,Write out app data
 updated_service_spark_df <- copy_to(sc, service_time_on_page, overwrite = TRUE)
 
@@ -169,6 +154,21 @@ dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_service_table_name))
 dbExecute(sc, paste0("ALTER TABLE ", write_service_table_name, "_temp RENAME TO ", write_service_table_name))
 
 print_changes_summary(temp_service_table_data, previous_service_data)
+
+# COMMAND ----------
+
+# selecting just the columns we're interested in storing and creating a service level table
+publication_time_on_page <- joined_data %>%
+  filter(page_type %in% c("Release page", "Methodology page","Table tool","Data guidance","Pre-release access")) %>% 
+  filter(publication != 'NA') %>%
+  select(date, publication, page_type, pageviews, sessions, userEngagementDuration) %>%
+  group_by(date, publication, page_type, userEngagementDuration) %>%
+  summarise(
+    pageviews = sum(pageviews),
+    sessions = sum(sessions),
+    engagementDuration = sum(userEngagementDuration),
+    .groups = "keep"
+  )
 
 # COMMAND ----------
 
