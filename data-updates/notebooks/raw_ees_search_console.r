@@ -147,10 +147,10 @@ ga4_spark_df <- copy_to(sc, updated_data, overwrite = TRUE)
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(ga4_spark_df, paste0(table_name, "_temp"), mode = "overwrite")
 
-temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_temp")) %>% collect()
+temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_temp"))
 
 test_that("Temp table data matches updated data", {
-  expect_equal(nrow(temp_table_data), nrow(updated_data))
+ expect_equal(sdf_nrow(temp_table_data), nrow(updated_data)) # No collect()
 })
 
 # Replace the old table with the new one
