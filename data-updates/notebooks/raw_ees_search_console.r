@@ -142,19 +142,37 @@ test_that("There are no missing dates since we started GA4", {
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC The sections below all used to be one code block, they have been broken out line by line to help with debugging an intermittent issue
+
+# COMMAND ----------
+
 ga4_spark_df <- copy_to(sc, updated_data, overwrite = TRUE)
+
+# COMMAND ----------
 
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(ga4_spark_df, paste0(table_name, "_temp"), mode = "overwrite")
 
+# COMMAND ----------
+
 temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_temp"))
 
+# COMMAND ----------
+
 test_that("Temp table data matches updated data", {
- expect_equal(sdf_nrow(temp_table_data), nrow(updated_data)) # No collect()
+ expect_equal(sdf_nrow(temp_table_data), nrow(updated_data))
 })
+
+# COMMAND ----------
 
 # Replace the old table with the new one
 dbExecute(sc, paste0("DROP TABLE IF EXISTS ", table_name))
+
+# COMMAND ----------
+
 dbExecute(sc, paste0("ALTER TABLE ", table_name, "_temp RENAME TO ", table_name))
+
+# COMMAND ----------
 
 print_changes_summary(temp_table_data, previous_data)
