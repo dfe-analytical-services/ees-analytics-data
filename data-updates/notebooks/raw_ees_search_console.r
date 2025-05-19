@@ -77,8 +77,7 @@ test_that("Query dates are valid", {
 previous_data <- sparklyr::sdf_sql(
   sc,
   paste("SELECT * FROM", table_name)
-) |>
-  collect()
+)
 
 latest_data <- data.frame()
 
@@ -107,8 +106,10 @@ for (day in seq(changes_since, changes_to, by = "day")) {
 # COMMAND ----------
 
 test_that("Col names match", {
-  expect_equal(names(latest_data), names(previous_data))
+  expect_equal(names(latest_data), colnames(previous_data)) # colnames is the spark_df equivalent of names
 })
+
+latest_data <- copy_to(sc, latest_data, overwrite = TRUE)
 
 updated_data <- rbind(previous_data, latest_data) |>
   dplyr::arrange(desc(date))
@@ -117,15 +118,19 @@ updated_data <- rbind(previous_data, latest_data) |>
 
 # DBTITLE 1,Quick data integrity checks
 test_that("New data has more rows than previous data", {
-  expect_true(nrow(updated_data) > nrow(previous_data))
+  expect_true(sdf_nrow(updated_data) > sdf_nrow(previous_data))
 })
 
 test_that("New data has no duplicate rows", {
-  expect_true(nrow(updated_data) == nrow(dplyr::distinct(updated_data)))
+  expect_true(sdf_nrow(updated_data) == sdf_nrow(sdf_distinct(updated_data)))
 })
 
 test_that("Latest date is as expected", {
-  expect_equal(updated_data$date[1], changes_to)
+  expect_equal(  updated_data %>%
+  sdf_distinct("date") %>%
+  sdf_read_column("date") %>%
+  max(), 
+  changes_to)
 })
 
 test_that("Data has no missing values", {
@@ -134,7 +139,7 @@ test_that("Data has no missing values", {
 
 test_that("There are no missing dates since we started GA4", {
   expect_equal(
-    setdiff(updated_data$date, seq(as.Date(reference_dates$search_console_date), changes_to, by = "day")) |>
+    setdiff(updated_data %>% sdf_distinct("date") %>% sdf_read_column("date"), seq(as.Date(reference_dates$search_console_date), changes_to, by = "day")) |>
       length(),
     0
   )
@@ -144,15 +149,12 @@ test_that("There are no missing dates since we started GA4", {
 
 # MAGIC %md
 # MAGIC The sections below all used to be one code block, they have been broken out line by line to help with debugging an intermittent issue
-
-# COMMAND ----------
-
-ga4_spark_df <- copy_to(sc, updated_data, overwrite = TRUE)
+# MAGIC - Issue should be fixed now, to merge back into one block if this works
 
 # COMMAND ----------
 
 # Write to temp table while we confirm we're good to overwrite data
-spark_write_table(ga4_spark_df, paste0(table_name, "_temp"), mode = "overwrite")
+spark_write_table(updated_data, paste0(table_name, "_temp"), mode = "overwrite")
 
 # COMMAND ----------
 
@@ -161,7 +163,7 @@ temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_
 # COMMAND ----------
 
 test_that("Temp table data matches updated data", {
- expect_equal(sdf_nrow(temp_table_data), nrow(updated_data))
+ expect_equal(sdf_nrow(temp_table_data), sdf_nrow(updated_data))
 })
 
 # COMMAND ----------
@@ -175,4 +177,4 @@ dbExecute(sc, paste0("ALTER TABLE ", table_name, "_temp RENAME TO ", table_name)
 
 # COMMAND ----------
 
-print_changes_summary(temp_table_data, previous_data)
+sdf_print_changes_summary(temp_table_data, previous_data)

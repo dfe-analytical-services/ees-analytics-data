@@ -64,6 +64,30 @@ print_changes_summary <- function(new_table, old_table) {
   }
 }
 
+# Temporary second function for notebooks making more use of sdf dataframes
+# Eventually should migrate all notebooks to match raw_search_console and use this, removing original function above
+sdf_print_changes_summary <- function(new_table, old_table){
+  if (is.null(old_table)) {
+    message("New table summary...")
+    message("Number of rows: ", sdf_nrow(new_table))
+    message("Column names: ", paste(colnames(new_table), collapse = ", "))
+  } else {
+    new_dates <- as.Date(
+      setdiff(
+        temp_table_data %>% sdf_distinct("date") %>% sdf_read_column("date"), 
+        previous_data %>% sdf_distinct("date") %>% sdf_read_column("date")
+      )
+    )
+    new_rows <- sdf_nrow(new_table) - sdf_nrow(old_table)
+
+    message("Updated table summary...")
+    message("New rows: ", new_rows)
+    message("New dates: ", paste(new_dates, collapse = ","))
+    message("Total rows: ", sdf_nrow(new_table), " rows")
+    message("Column names: ", paste(colnames(new_table), collapse = ", "))
+  }
+}
+
 # Scraping helpers -------------------------------------------------------------------
 scrape_publications <- function(url) {
   rvest::read_html(url) |>
