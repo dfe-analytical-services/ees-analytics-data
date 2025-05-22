@@ -28,4 +28,18 @@ Notebooks used in the scheduled databricks workflows are stored and tracked in `
 
 While you can write them from scratch, you can create a notebook in the editor in databricks itself and export the source (.r) file to start you off if easier.
 
+Broadly we have two kinds of notebooks:
+
+1. Ingest raw data
+    - These notebooks start with the prefix `raw_*` and connect to various sources to pull in new data and append to existing tables. 
+    - These tables will recognise when the most recent data available is and only query the relevant APIs for that data.
+    - These are handled carefully with several checks before writing the new tables, if we lose the tables we lose our data. Due to retention periods (e.g. GA), these tables can not be fully recreated if lost.
+
+2. Process app data
+    - These notebooks start with the prefix `app_*` and are used in the [EES analytics dashboard](https://github.com/dfe-analytical-services/ees-analytics-dashboard).
+    - As the app tables are purely for use in the analytics app and can always be rebuilt from the raw tables, these notebooks will usually just rebuild the whole table from scratch each time.
+    - There are quality checks, usually if they fail you might just have an edge case in the analytics data we've not anticipated that you will need to account for in the relevant `app_*` notebook.
+
 The `notebooks/ees_last_updated.r` notebook is used to trigger updates of the last updated date table in the database. This is key (literally), as it's used as a cache key in the app to tell it when to re-run larger data queries.
+
+Currently, as this process was built at speed, it is suboptimal. Most of the notebooks use very similar repetitive code and are ran linearly in the EES analytics update (LINEAR) workflow. In future, to make maintenance easier the code should be consolidated to use more commmon functions / notebooks and also to run in parallel, an example of how parallel running might look, showing dependencies between notebooks is visible in the original EES analytics update workflow.
