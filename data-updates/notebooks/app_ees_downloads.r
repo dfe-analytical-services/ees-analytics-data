@@ -161,6 +161,7 @@ downloads <- downloads %>%
     str_detect(eventCategory, "Looked After Children Aged 16 to 17 in Independent or Semi-Independent Placements Release Page - Use") ~ "Release page",
     str_detect(eventCategory, "Education, Children’s Social Care and Offending: Local Authority Level Dashboard Release Page - Usef") ~ "Release page",
     str_detect(eventCategory, "Children's Social Work Workforce: Attrition, Caseload, and Agency Workforce Release Page - Useful In") ~ "Release page",
+    str_detect(eventCategory, "Expansion to Early Childcare Entitlements: Childcare Experiences Survey Release Page - Useful Inform") ~ "Release page",
     TRUE ~ "NA"
   ))
 
