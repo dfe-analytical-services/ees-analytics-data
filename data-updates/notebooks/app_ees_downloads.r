@@ -71,8 +71,6 @@ sc <- spark_connect(method = "databricks")
 
 # DBTITLE 1,Join the tables together and filter to just accordion relevant events
 
-## I've done this with a group by because otherwise the tests would fail because of duplicates. This could mean I'm just double counting on the day overlap between the two tables - but would need to investigate more to find out.
-
 full_data <- sparklyr::sdf_sql(
   sc, paste("
     SELECT
@@ -162,9 +160,18 @@ downloads <- downloads %>%
     str_detect(eventCategory, "Education, Children’s Social Care and Offending: Local Authority Level Dashboard Release Page - Usef") ~ "Release page",
     str_detect(eventCategory, "Children's Social Work Workforce: Attrition, Caseload, and Agency Workforce Release Page - Useful In") ~ "Release page",
     str_detect(eventCategory, "Expansion to Early Childcare Entitlements: Childcare Experiences Survey Release Page - Useful Inform") ~ "Release page",
+    str_detect(eventCategory, "School Counts by Average Progress 8 Scores for Disadvantaged White British Pupils Release Page - Use") ~ "Release page",
     TRUE ~ "NA"
   ))
 
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC If the test below fails, run:
+# MAGIC - `downloads %>% filter(page_type == "NA") %>% display()`
+# MAGIC
+# MAGIC To see the rows that are failing and then add into the exceptions above. It's more than likely just a new cut off name that we're only hitting for the first time.
 
 # COMMAND ----------
 
