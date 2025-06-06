@@ -94,7 +94,7 @@ latest_data <- copy_to(sc, latest_data, overwrite = TRUE)
 
 updated_data <- rbind(previous_data, latest_data) |>
   dplyr::arrange(desc(date)) |>
-  tidyr::drop_na()
+  filter(if_all(everything(), ~ !is.na(.)))
 
 # COMMAND ----------
 
@@ -138,10 +138,10 @@ test_that("There are no missing dates since we started GA4", {
 # Write to temp table while we confirm we're good to overwrite data
 spark_write_table(updated_data, paste0(table_name, "_temp"), mode = "overwrite")
 
-temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_temp")) %>% collect()
+temp_table_data <- sparklyr::sdf_sql(sc, paste0("SELECT * FROM ", table_name, "_temp"))
 
 test_that("Temp table data matches updated data", {
-  expect_equal(nrow(temp_table_data), sdf_nrow(updated_data))
+  expect_equal(sdf_nrow(temp_table_data), sdf_nrow(updated_data))
 })
 
 # Replace the old table with the new one
