@@ -161,6 +161,7 @@ downloads <- downloads %>%
     str_detect(eventCategory, "Children's Social Work Workforce: Attrition, Caseload, and Agency Workforce Release Page - Useful In") ~ "Release page",
     str_detect(eventCategory, "Expansion to Early Childcare Entitlements: Childcare Experiences Survey Release Page - Useful Inform") ~ "Release page",
     str_detect(eventCategory, "School Counts by Average Progress 8 Scores for Disadvantaged White British Pupils Release Page - Use") ~ "Release page",
+    str_detect(eventCategory, "Estimate of Additional Children Claiming Free School Meals Following Expansion of Eligibility Releas") ~ "Release page",
     TRUE ~ "NA"
   ))
 
