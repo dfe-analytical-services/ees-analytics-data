@@ -1,5 +1,3 @@
-[![lintr](https://github.com/dfe-analytical-services/ees-analytics-data/actions/workflows/lintr.yml/badge.svg)](https://github.com/dfe-analytical-services/ees-analytics-data/actions/workflows/lintr.yml)
-
 # Explore education statistics analytics 
 
 Analysis of analytics data for our explore education statistics (EES) service, pulling in data from a number of sources to disseminate out. Primarily shared with publishers on the service to understand usage of their content, and with the EES service team for assessing service performance.
