@@ -121,8 +121,9 @@ accordion_events <- accordion_events %>%
     ## Some manual faffery to address the publications that have too long a title
     str_detect(eventCategory, "Attendance in Education and Early Years Settings During the Coronavirus \\(COVID-19\\) Pandemic Release ") ~ "Release page",
     str_detect(eventCategory, "Attendance in Education and Early Years Settings During the Coronavirus \\(COVID-19\\) Pandemic Methodol") ~ "Methodology",
-    str_detect(eventCategory, "Outcomes for Children in Need, Including Children Looked After by Local Authorities in England Metho") ~ "Methodology",
     str_detect(eventCategory, "Outcomes for Children in Need, Including Children Looked After by Local Authorities in England Relea") ~ "Release page",
+    str_detect(eventCategory, "Outcomes for Children in Need, Including Children Looked After by Local Authorities in England Metho") ~ "Methodology",
+    str_detect(eventCategory, "Estimate of Additional Children Claiming Free School Meals Following Expansion of Eligibility Releas") ~ "Release page", # this publication has a methodology accordion but no separate methodology page
     ## Service pages that have / did have accordions, might be helpful to look at but not main focus
     str_detect(eventCategory, "Methodologies") ~ "Methodology navigation",
     str_detect(eventCategory, "Find Statistics and Data") ~ "Find stats navigation",
