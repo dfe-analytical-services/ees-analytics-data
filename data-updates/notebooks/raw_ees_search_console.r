@@ -86,9 +86,7 @@ for (day in seq(changes_since, changes_to, by = "day")) {
 
   message("Querying for ", day)
 
-  latest_data <- rbind(
-    latest_data,
-    search_analytics(
+    day_query_result <- search_analytics(
       siteURL = "https://explore-education-statistics.service.gov.uk/",
       startDate = day,
       endDate = day,
@@ -96,11 +94,24 @@ for (day in seq(changes_since, changes_to, by = "day")) {
       searchType = "web",
       rowLimit = 200000, # seems odd as the actual limit is 25k but is what was in the example docs!
       walk_data = "byBatch"
-    ) |>
-      rename("pagePath" = page)
-  )
+    )
+
+    if(is.null(nrow(day_query_result))){
+      message("No rows found for ", day)
+    } else {
+      latest_data <- rbind(
+        latest_data,
+        day_query_result |> rename("pagePath" = page)
+      )
+    }
 
   message("Current rows: ", nrow(latest_data))
+}
+
+# COMMAND ----------
+
+if(nrow(latest_data) == 0){
+  dbutils.notebook.exit("No new rows were found therefore there's no need to update this table, skipping the rest of the notebook")
 }
 
 # COMMAND ----------
