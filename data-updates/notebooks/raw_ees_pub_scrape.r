@@ -221,8 +221,9 @@ if (!is.null(previous_data)) {
     expect_lt(nrow(temp_table_data), nrow(previous_data) * 1.1)
   })
 
-  test_that("Number of pub / slug combos is only going up", {
-    expect_gte(nrow(temp_table_data), nrow(previous_data))
+# Sometimes publications may be archived, so occassional low drops are okay
+  test_that("Number of pub / slug combos has not decreased by more than 5%", {
+    expect_gte(nrow(temp_table_data), nrow(previous_data) * 0.95)
   })
 }
 
