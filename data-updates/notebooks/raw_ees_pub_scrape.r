@@ -182,7 +182,8 @@ combined_scrape <- bind_rows(combined_scrape, new_rows) |>
 # DBTITLE 1,Manually adjust for renamed publications
 filtered_scrape <- combined_scrape |>
   filter(!(slug == "participation-in-education-and-training-and-employment" & title == "Participation in education and training and employment") &
-    !(slug == "pupil-absence-in-schools-in-england" & title == "Pupil absence in schools in England: autumn and spring terms"))
+    !(slug == "pupil-absence-in-schools-in-england" & title == "Pupil absence in schools in England: autumn and spring terms") &
+    !(slug == "teacher-and-leader-development-ecf-and-npqs" & title == "Teacher and Leader development: ECF and NPQs")) 
 
 test_that("Each slug has a unique title", {
   duplicate_slugs <- filtered_scrape |>
