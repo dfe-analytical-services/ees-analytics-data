@@ -111,13 +111,14 @@ extract_total_pages <- function(url) {
   page_text <- rvest::read_html(url) |>
     rvest::html_nodes("p") |>
     rvest::html_text() |>
-    stringr::str_subset("Page \\d+ of \\d+")
+    stringr::str_subset("page \\d+ of \\d+")
 
   if (length(page_text) > 0) {
     total_pages <- stringr::str_extract(page_text, "(?<=of )\\d+") |>
       as.numeric()
     return(total_pages)
   } else {
+    warning('Failed to find text "page ? of ?" when scraping the EES find stats page.')
     return(NA)
   }
 }
