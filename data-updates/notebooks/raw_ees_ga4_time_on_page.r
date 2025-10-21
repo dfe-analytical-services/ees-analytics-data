@@ -24,9 +24,9 @@ sc <- spark_connect(method = "databricks")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Assumption we'll just do this from GA4 data as the way it's measured changed. 
+# MAGIC Assumption we'll just do this from GA4 data as the way it's measured changed.
 # MAGIC
-# MAGIC To map directly to old UA avg time on page data we'd need to keep this at pagePath level. 
+# MAGIC To map directly to old UA avg time on page data we'd need to keep this at pagePath level.
 
 # COMMAND ----------
 
@@ -83,7 +83,7 @@ latest_data <- ga_data(
   date_range = c(changes_since, changes_to),
   limit = -1
 ) |>
-  dplyr::rename("pageviews" = screenPageViews) 
+  dplyr::rename("pageviews" = screenPageViews)
 
 
 # COMMAND ----------

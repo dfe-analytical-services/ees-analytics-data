@@ -17,9 +17,9 @@ sc <- spark_connect(method = "databricks")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Assumption we'll just do this from GA4 data as the way it's measured changed. 
+# MAGIC Assumption we'll just do this from GA4 data as the way it's measured changed.
 # MAGIC
-# MAGIC To map directly to old UA avg time on page data we'd need to keep this at pagePath level. 
+# MAGIC To map directly to old UA avg time on page data we'd need to keep this at pagePath level.
 
 # COMMAND ----------
 
@@ -159,8 +159,8 @@ print_changes_summary(temp_service_table_data, previous_service_data)
 
 # selecting just the columns we're interested in storing and creating a service level table
 publication_time_on_page <- joined_data %>%
-  filter(page_type %in% c("Release page", "Methodology page","Table tool","Data guidance","Pre-release access")) %>% 
-  filter(publication != 'NA') %>%
+  filter(page_type %in% c("Release page", "Methodology page", "Table tool", "Data guidance", "Pre-release access")) %>%
+  filter(publication != "NA") %>%
   select(date, publication, page_type, pageviews, sessions, userEngagementDuration) %>%
   group_by(date, publication, page_type, userEngagementDuration) %>%
   summarise(

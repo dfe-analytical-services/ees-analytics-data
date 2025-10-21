@@ -108,11 +108,11 @@ test_that("New data has no duplicate rows", {
 })
 
 test_that("Latest date is as expected", {
-  expect_equal( 
+  expect_equal(
     updated_data %>%
       sdf_distinct("date") %>%
       sdf_read_column("date") %>%
-      max(), 
+      max(),
     changes_to
   )
 })
@@ -124,7 +124,7 @@ test_that("Data has no missing values", {
 test_that("There are no missing dates since we started GA4", {
   expect_equal(
     setdiff(
-      updated_data %>% sdf_distinct("date") %>% sdf_read_column("date"), 
+      updated_data %>% sdf_distinct("date") %>% sdf_read_column("date"),
       seq(as.Date(reference_dates$ga4_date), changes_to, by = "day")
     ) |>
       length(),
