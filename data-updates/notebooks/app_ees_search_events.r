@@ -142,6 +142,9 @@ search_events <- search_events %>%
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
+  if (nrow(search_events %>% filter(page_type == "NA")) != 0) {
+    print(search_events %>% filter(page_type == "NA"))
+  }
   expect_true(nrow(search_events %>% filter(page_type == "NA")) == 0)
 })
 
