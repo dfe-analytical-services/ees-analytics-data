@@ -102,8 +102,8 @@ extract_total_pubs <- function(url) {
   rvest::read_html(url) |>
     rvest::html_nodes("p") |>
     rvest::html_text() |>
-    stringr::str_subset("results") |>
-    stringr::str_remove(" resultss, page \\d+ of \\d+, showing all publications") |>
+    stringr::str_subset("results, page") |>
+    stringr::str_remove(" results, page \\d+ of \\d+, showing all publications") |>
     as.numeric()
 }
 
