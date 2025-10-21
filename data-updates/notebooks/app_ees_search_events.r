@@ -128,12 +128,13 @@ search_events <- search_events %>%
     str_detect(eventCategory, "Find Statistics and Data") ~ "Find stats",
     str_detect(eventCategory, "/Find-Statistics") ~ "Find stats",
     str_detect(eventCategory, "Glossary") ~ "Glossary",
-    str_detect(eventCategory, "Data Catalogue") ~ "Data catalogue",
+    str_detect(eventCategory, "Data Catalogue|/Data-Catalogue") ~ "Data catalogue",
     str_detect(eventCategory, "/Data-Catalogue/") ~ "Data catalogue",
     str_detect(eventCategory, "/Download-Latest-Data") ~ "Data catalogue",
     str_detect(eventCategory, "/Methodology/") ~ "Methodology pages",
     str_detect(eventCategory, "/Methodology") ~ "Methodology nav",
     str_detect(eventCategory, "/Data-Tables/") ~ "Table tool",
+    grepl("/static/", eventCategory) ~ "static chunks",
     TRUE ~ "NA"
   ))
 
@@ -141,10 +142,18 @@ search_events <- search_events %>%
 # COMMAND ----------
 
 # DBTITLE 1,Tests
+if(nrow(search_events %>% filter(page_type == "NA")) != 0){
+  warning(
+  "Found following unclassified event categories:", 
+  paste(
+    search_events |> 
+      filter(page_type == "NA") |> 
+      pull(eventCategory),
+    collapse = ", "
+  )
+)
+}
 test_that("There are no events without a page type classification", {
-  if (nrow(search_events %>% filter(page_type == "NA")) != 0) {
-    print(search_events %>% filter(page_type == "NA"))
-  }
   expect_true(nrow(search_events %>% filter(page_type == "NA")) == 0)
 })
 
