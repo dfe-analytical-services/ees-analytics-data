@@ -194,7 +194,7 @@ tables_created <- tables_created %>%
   summarise(
     eventCount = sum(eventCount)
   ) %>%
-  ungroup |>
+  ungroup() |>
   mutate(eventLabel = sub("^.*/", "", eventLabel)) # strip publication names out of event label
 
 # COMMAND ----------

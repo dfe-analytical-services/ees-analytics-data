@@ -3,6 +3,8 @@ message("\nRunning commit hooks...")
 
 message("\n")
 
+renv::restore()
+
 message("1. Checking code styling...\n")
 style_output <- eval(styler::style_dir()$changed)
 if (any(style_output)) {

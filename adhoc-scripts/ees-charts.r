@@ -169,13 +169,13 @@ ggplot(hourly_breakdown, aes(x = sessions, y = factor(hour, levels = rev(0:23), 
 
 device_table <- sparklyr::sdf_sql(sc, paste0("
 SELECT device, (sum(pageviews) / sum(sum(pageviews)) OVER ())* 100 as pageviews_percentage
-FROM 
+FROM
     catalog_40_copper_statistics_services.analytics_app.ees_service_device_browser
 WHERE page_type = 'Release page'
 GROUP BY device
 ORDER BY pageviews_percentage DESC;
 ")) |>
-  collect() 
+  collect()
 
 ggplot(device_table, aes(x = pageviews_percentage, y = reorder(device, pageviews_percentage))) +
   geom_col(fill = af_colour_values["dark-blue"]) +
@@ -198,7 +198,7 @@ ggplot(device_table, aes(x = pageviews_percentage, y = reorder(device, pageviews
 
 source_table <- sparklyr::sdf_sql(sc, paste0("
 SELECT source, round((sum(pageviews) / sum(sum(pageviews)) OVER ())* 100,1) as pageviews_percentage
-FROM 
+FROM
     catalog_40_copper_statistics_services.analytics_app.ees_service_source_medium
 WHERE page_type = 'Release page'
 GROUP BY source
@@ -229,12 +229,12 @@ ggplot(source_table, aes(x = pageviews_percentage, y = reorder(source, pageviews
 # COMMAND ----------
 
 enagaged_table <- sparklyr::sdf_sql(sc, paste0("
-SELECT page_type, round(avg(engagementDuration / pageviews), 1) as average_engaged_time 
-FROM ", catalog, "analytics_app.ees_service_time_on_page 
-GROUP BY page_type 
+SELECT page_type, round(avg(engagementDuration / pageviews), 1) as average_engaged_time
+FROM ", catalog, "analytics_app.ees_service_time_on_page
+GROUP BY page_type
 ORDER BY average_engaged_time DESC;
 ")) |>
-  collect() 
+  collect()
 
 ggplot(enagaged_table, aes(x = average_engaged_time, y = reorder(page_type, average_engaged_time))) +
   geom_col(fill = af_colour_values["dark-blue"]) +
@@ -248,7 +248,7 @@ ggplot(enagaged_table, aes(x = average_engaged_time, y = reorder(page_type, aver
     caption = "Source: Google Analytics 4"
   ) +
   theme(plot.caption = element_text(margin = margin(t = 20))) +
-  #theme(plot.margin = unit(c(1, 5, 1, 0.5), "cm")) +
+  # theme(plot.margin = unit(c(1, 5, 1, 0.5), "cm")) +
   theme(axis.text.x = element_blank()) +
   theme(axis.line.y = element_blank()) +
   coord_cartesian(xlim = c(0, max(enagaged_table$average_engaged_time) * 1.2))

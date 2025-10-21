@@ -66,7 +66,7 @@ print_changes_summary <- function(new_table, old_table) {
 
 # Temporary second function for notebooks making more use of sdf dataframes
 # Eventually should migrate all notebooks to match raw_search_console and use this, removing original function above
-sdf_print_changes_summary <- function(new_table, old_table){
+sdf_print_changes_summary <- function(new_table, old_table) {
   if (is.null(old_table)) {
     message("New table summary...")
     message("Number of rows: ", sdf_nrow(new_table))
@@ -74,7 +74,7 @@ sdf_print_changes_summary <- function(new_table, old_table){
   } else {
     new_dates <- as.Date(
       setdiff(
-        temp_table_data %>% sdf_distinct("date") %>% sdf_read_column("date"), 
+        temp_table_data %>% sdf_distinct("date") %>% sdf_read_column("date"),
         previous_data %>% sdf_distinct("date") %>% sdf_read_column("date")
       )
     )
@@ -100,10 +100,10 @@ scrape_publications <- function(url) {
 
 extract_total_pubs <- function(url) {
   rvest::read_html(url) |>
-    rvest::html_nodes("h2") |>
+    rvest::html_nodes("p") |>
     rvest::html_text() |>
     stringr::str_subset("results") |>
-    stringr::str_remove(" results") |>
+    stringr::str_remove(" resultss, page \\d+ of \\d+, showing all publications") |>
     as.numeric()
 }
 
@@ -111,13 +111,14 @@ extract_total_pages <- function(url) {
   page_text <- rvest::read_html(url) |>
     rvest::html_nodes("p") |>
     rvest::html_text() |>
-    stringr::str_subset("Page \\d+ of \\d+")
+    stringr::str_subset("page \\d+ of \\d+")
 
   if (length(page_text) > 0) {
     total_pages <- stringr::str_extract(page_text, "(?<=of )\\d+") |>
       as.numeric()
     return(total_pages)
   } else {
+    warning('Failed to find text "page ? of ?" when scraping the EES find stats page.')
     return(NA)
   }
 }

@@ -183,7 +183,7 @@ combined_scrape <- bind_rows(combined_scrape, new_rows) |>
 filtered_scrape <- combined_scrape |>
   filter(!(slug == "participation-in-education-and-training-and-employment" & title == "Participation in education and training and employment") &
     !(slug == "pupil-absence-in-schools-in-england" & title == "Pupil absence in schools in England: autumn and spring terms") &
-    !(slug == "teacher-and-leader-development-ecf-and-npqs" & title == "Teacher and Leader development: ECF and NPQs")) 
+    !(slug == "teacher-and-leader-development-ecf-and-npqs" & title == "Teacher and Leader development: ECF and NPQs"))
 
 test_that("Each slug has a unique title", {
   duplicate_slugs <- filtered_scrape |>
@@ -222,7 +222,7 @@ if (!is.null(previous_data)) {
     expect_lt(nrow(temp_table_data), nrow(previous_data) * 1.1)
   })
 
-# Sometimes publications may be archived, so occassional low drops are okay
+  # Sometimes publications may be archived, so occassional low drops are okay
   test_that("Number of pub / slug combos has not decreased by more than 5%", {
     expect_gte(nrow(temp_table_data), nrow(previous_data) * 0.95)
   })
