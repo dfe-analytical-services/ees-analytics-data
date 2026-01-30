@@ -116,7 +116,7 @@ accordion_events <- accordion_events %>%
   mutate(page_type = case_when(
     ## Main recording/groupings for the pages we'll be most interested in
     str_detect(eventCategory, "Release Page") ~ "Release page",
-    str_detect(eventCategory, "Release Dxata Page") ~ "Release data page",
+    str_detect(eventCategory, "Release Data Page") ~ "Release data page",
     str_detect(eventCategory, "Methodology") ~ "Methodology",
     str_detect(eventCategory, "Glossary") ~ "Glossary",
     ## Some manual faffery to address the publications that have too long a title
