@@ -116,6 +116,7 @@ accordion_events <- accordion_events %>%
   mutate(page_type = case_when(
     ## Main recording/groupings for the pages we'll be most interested in
     str_detect(eventCategory, "Release Page") ~ "Release page",
+    str_detect(eventCategory, "Release Data Page") ~ "Release data page",
     str_detect(eventCategory, "Methodology") ~ "Methodology",
     str_detect(eventCategory, "Glossary") ~ "Glossary",
     ## Some manual faffery to address the publications that have too long a title
@@ -136,7 +137,12 @@ accordion_events <- accordion_events %>%
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
-  expect_true(nrow(accordion_events %>% filter(page_type == "NA")) == 0)
+  expect_true(nrow(accordion_events %>% filter(page_type == "NA")) == 0,
+    paste(
+"Found the following new eventCategories", 
+    paste(accordion_events %>% filter(page_type == "NA") |> pull(eventCategory), collapse = ", ")
+  )
+  )
 })
 
 # COMMAND ----------
