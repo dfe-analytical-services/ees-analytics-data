@@ -67,10 +67,23 @@ full_data <- full_data %>%
     str_detect(pagePath, "/glossary") ~ "Glossary",
     str_detect(pagePath, "/cookies") ~ "Cookies",
     str_detect(pagePath, "/") ~ "Homepage",
+    str_detect(pagePath, "(other)") ~ "Other",
     TRUE ~ "NA"
   ))
 
 # COMMAND ----------
+
+if(nrow(full_data %>% filter(page_type == "NA"))>0){
+  message(
+    "Found undocumented pagePath(s):", 
+    paste(
+      full_data |>
+        dplyr::filter(page_type == "NA") |>
+        dplyr::pull(pagePath) |>
+        unique(),
+      collapse = ","
+    ))
+}
 
 test_that("There are no events without a page type classification", {
   expect_true(nrow(full_data %>% filter(page_type == "NA")) == 0)
