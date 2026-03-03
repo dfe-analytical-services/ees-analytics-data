@@ -73,16 +73,17 @@ full_data <- full_data %>%
 
 # COMMAND ----------
 
-if(nrow(full_data %>% filter(page_type == "NA"))>0){
+if (nrow(full_data %>% filter(page_type == "NA")) > 0) {
   message(
-    "Found undocumented pagePath(s):", 
+    "Found undocumented pagePath(s):",
     paste(
       full_data |>
         dplyr::filter(page_type == "NA") |>
         dplyr::pull(pagePath) |>
         unique(),
       collapse = ","
-    ))
+    )
+  )
 }
 
 test_that("There are no events without a page type classification", {

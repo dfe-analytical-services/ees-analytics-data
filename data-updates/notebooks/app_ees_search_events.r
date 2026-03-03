@@ -142,16 +142,16 @@ search_events <- search_events %>%
 # COMMAND ----------
 
 # DBTITLE 1,Tests
-if(nrow(search_events %>% filter(page_type == "NA")) != 0){
+if (nrow(search_events %>% filter(page_type == "NA")) != 0) {
   warning(
-  "Found following unclassified event categories:", 
-  paste(
-    search_events |> 
-      filter(page_type == "NA") |> 
-      pull(eventCategory),
-    collapse = ", "
+    "Found following unclassified event categories:",
+    paste(
+      search_events |>
+        filter(page_type == "NA") |>
+        pull(eventCategory),
+      collapse = ", "
+    )
   )
-)
 }
 test_that("There are no events without a page type classification", {
   expect_true(nrow(search_events %>% filter(page_type == "NA")) == 0)

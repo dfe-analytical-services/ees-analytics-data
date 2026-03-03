@@ -91,6 +91,7 @@ session_starts <- session_starts %>%
     str_detect(pagePath, "/glossary") ~ "Glossary",
     str_detect(pagePath, "/cookies") ~ "Cookies",
     str_detect(pagePath, "/") ~ "Homepage",
+    str_detect(pagePath, "(other)") ~ "Other",
     TRUE ~ "NA"
   ))
 

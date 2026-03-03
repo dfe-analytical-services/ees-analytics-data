@@ -137,11 +137,12 @@ accordion_events <- accordion_events %>%
 
 # DBTITLE 1,Tests
 test_that("There are no events without a page type classification", {
-  expect_true(nrow(accordion_events %>% filter(page_type == "NA")) == 0,
+  expect_true(
+    nrow(accordion_events %>% filter(page_type == "NA")) == 0,
     paste(
-"Found the following new eventCategories", 
-    paste(accordion_events %>% filter(page_type == "NA") |> pull(eventCategory), collapse = ", ")
-  )
+      "Found the following new eventCategories",
+      paste(accordion_events %>% filter(page_type == "NA") |> pull(eventCategory), collapse = ", ")
+    )
   )
 })
 
