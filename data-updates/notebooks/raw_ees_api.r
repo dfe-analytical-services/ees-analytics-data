@@ -9,7 +9,7 @@
 # MAGIC ### Prerequisites
 # MAGIC
 # MAGIC - **Cluster libraries**: `sparklyr` and `arrow` are pre-installed on DBR. `duckdb` and `DBI` are installed at runtime if missing.
-# MAGIC - **Permissions**: Read access to the source Volume at `/Volumes/catalog_40_copper_statistics_services/statistics_services/mv_statistics_services/`. Write access to `catalog_40_copper_statistics_services.statistics_services`.
+# MAGIC - **Permissions**: Read access to the source Volume at `/Volumes/catalog_40_copper_statistics_services/statistics_services/mv_statistics_services/`. Write access to `catalog_40_copper_statistics_services.analytics_raw`.
 # MAGIC - **Filename format**: Source parquet files must be prefixed with `YYYYMMdd-HHmmss` (e.g., `20240315-143022-queries.parquet`). This prefix is parsed into `_file_datetime` and `_file_date` metadata columns.
 
 # COMMAND ----------
@@ -18,7 +18,7 @@
 # -- Configuration -----------------------------------------------------------
 
 TARGET_CATALOG <- "catalog_40_copper_statistics_services"
-TARGET_SCHEMA  <- "statistics_services"
+TARGET_SCHEMA  <- "analytics_raw"
 
 # Volume root and structured subfolder path. The upstream Data Factory pipeline
 # originally wrote files into public-api/<subfolder>/, but since 2026-02-13 has
@@ -425,7 +425,7 @@ write_to_delta_incremental <- function(
 # MAGIC %md
 # MAGIC ## Write to Delta Tables (Incremental)
 # MAGIC
-# MAGIC The cells below write each dataset to Delta tables in `catalog_40_copper_statistics_services.statistics_services`.
+# MAGIC The cells below write each dataset to Delta tables in `catalog_40_copper_statistics_services.analytics_raw`.
 # MAGIC
 # MAGIC On first run, all files are processed. On subsequent runs, only new files are appended.
 # MAGIC
