@@ -801,3 +801,250 @@ cat("\n=== Date completeness check complete ===\n")
 # MAGIC #### 5. Single unexplained weekday gaps in `raw_ees_top_level` and `raw_ees_publications`
 # MAGIC
 # MAGIC `raw_ees_top_level` is missing 2025-07-17 (Thursday) and `raw_ees_publications` is missing 2025-07-17 (Thursday) and 2025-08-05 (Tuesday). These are shared with no other table, suggesting endpoint-specific issues rather than a whole-pipeline failure. Low priority, but worth a quick check if these dates matter for reporting.
+
+# COMMAND ----------
+
+# DBTITLE 1,Backfill helper section
+# MAGIC %md
+# MAGIC ## Backfill Helper
+# MAGIC
+# MAGIC This helper inspects the missing dates identified by the completeness check and classifies each gap as **recoverable** (source files exist in the Volume but weren't ingested) or **unrecoverable** (no source files found — needs upstream re-delivery).
+# MAGIC
+# MAGIC ### Configuration
+# MAGIC
+# MAGIC | Parameter | Default | Description |
+# MAGIC | --- | --- | --- |
+# MAGIC | `BACKFILL_EXCLUDE_RANGES` | 2026-02-13 to 2026-02-16 | Date ranges to skip (e.g. known migration windows) |
+# MAGIC | `BACKFILL_DRY_RUN` | `TRUE` | When `TRUE`, only reports findings. Set to `FALSE` to actually re-ingest recoverable files |
+# MAGIC
+# MAGIC The helper reuses the `completeness` list produced by the date completeness check cell above, so that cell must be run first.
+
+# COMMAND ----------
+
+# DBTITLE 1,Backfill helper for missing dates
+# -- Backfill helper -----------------------------------------------------------
+# Scans the Volume for source files matching missing dates and classifies each
+# gap as recoverable or unrecoverable.
+#
+# Depends on: `completeness` list from the date completeness check cell.
+
+# -- Configuration -------------------------------------------------------------
+BACKFILL_DRY_RUN <- TRUE   # Set FALSE to actually re-ingest recoverable files
+
+# Known outage windows to exclude from the backfill scan
+BACKFILL_EXCLUDE_RANGES <- list(
+    list(from = as.Date("2026-02-13"), to = as.Date("2026-02-16"),
+         reason = "Data Factory migration window")
+)
+
+# Mapping from table name to the subfolder / patterns used by the ingestion
+# function, so we can look up files and optionally re-trigger ingestion.
+table_config <- list(
+    raw_ees_top_level = list(
+        folder = "top-level", pattern = NULL,
+        root_pattern = "public-api-top-level-calls"
+    ),
+    raw_ees_query_access = list(
+        folder = "queries", pattern = "query-access",
+        root_pattern = "public-api-query-access"
+    ),
+    raw_ees_queries = list(
+        folder = "queries", pattern = "queries\\.parquet",
+        root_pattern = "public-api-queries\\.parquet"
+    ),
+    raw_ees_data_sets = list(
+        folder = "data-sets", pattern = NULL,
+        root_pattern = "public-api-data-set-calls"
+    ),
+    raw_ees_publications = list(
+        folder = "publications", pattern = NULL,
+        root_pattern = "public-api-publications-calls"
+    ),
+    raw_ees_data_set_versions = list(
+        folder = "data-set-versions", pattern = NULL,
+        root_pattern = "public-api-data-set-version-calls"
+    )
+)
+
+in_exclude_range <- function(d) {
+    dominated <- rep(FALSE, length(d))
+    for (rng in BACKFILL_EXCLUDE_RANGES) {
+        dominated <- dominated | (d >= rng$from & d <= rng$to)
+    }
+    dominated
+}
+
+# -- Scan each table -----------------------------------------------------------
+cat("\n=== Backfill Helper ===")
+cat(sprintf("\nMode: %s", if (BACKFILL_DRY_RUN) "DRY RUN (report only)" else "LIVE (will re-ingest)"))
+cat(sprintf("\nExclude ranges: %d defined\n",
+    length(BACKFILL_EXCLUDE_RANGES)))
+
+backfill_summary <- list()
+
+for (item in completeness) {
+    tbl <- item$summary$table
+    missing <- item$missing_dates
+    if (length(missing) == 0) next
+
+    # Apply exclusion filters
+    excluded <- in_exclude_range(missing)
+    excluded_dates <- missing[excluded]
+    missing <- missing[!excluded]
+
+    if (length(missing) == 0) {
+        cat(sprintf("\n  %s — no actionable gaps (all filtered out)\n", tbl))
+        backfill_summary[[tbl]] <- list(
+            actionable = 0, recoverable = 0, unrecoverable = 0,
+            excluded = length(excluded_dates)
+        )
+        next
+    }
+
+    cfg <- table_config[[tbl]]
+    if (is.null(cfg)) {
+        cat(sprintf("\n  %s — SKIPPED (no config found)\n", tbl))
+        next
+    }
+
+    # Collect all source files for this table (same logic as ingestion function)
+    subfolder <- gsub("//+", "/", paste0(volume_path, "/", cfg$folder, "/"))
+    subfolder_files <- if (dir.exists(subfolder)) {
+        raw <- list.files(subfolder, recursive = FALSE)
+        fps <- paste0(subfolder, raw)
+        if (!is.null(cfg$pattern)) fps[grepl(cfg$pattern, fps)] else fps
+    } else {
+        character(0)
+    }
+
+    root_files <- if (!is.null(cfg$root_pattern)) {
+        raw <- list.files(volume_root, recursive = FALSE)
+        fps <- paste0(volume_root, raw[grepl(cfg$root_pattern, raw)])
+        fps[grepl("\\.parquet$", fps)]
+    } else {
+        character(0)
+    }
+
+    combined <- c(subfolder_files, root_files)
+    all_files <- combined[!duplicated(basename(combined))]
+
+    # Extract date prefix (YYYYMMdd) from each filename
+    file_dates <- tryCatch(
+        as.Date(substr(basename(all_files), 1, 8), format = "%Y%m%d"),
+        error = function(e) rep(NA, length(all_files))
+    )
+
+    # Match missing dates to available files
+    recoverable_dates  <- missing[missing %in% file_dates]
+    unrecoverable_dates <- missing[!missing %in% file_dates]
+
+    recoverable_files <- if (length(recoverable_dates) > 0) {
+        all_files[file_dates %in% recoverable_dates]
+    } else {
+        character(0)
+    }
+
+    backfill_summary[[tbl]] <- list(
+        actionable    = length(missing),
+        recoverable   = length(recoverable_dates),
+        unrecoverable = length(unrecoverable_dates),
+        excluded      = length(excluded_dates),
+        recoverable_files = recoverable_files,
+        recoverable_dates = recoverable_dates,
+        unrecoverable_dates = unrecoverable_dates
+    )
+
+    cat(sprintf(
+        "\n  %s — %d actionable gap(s): %d recoverable, %d unrecoverable, %d excluded\n",
+        tbl, length(missing), length(recoverable_dates),
+        length(unrecoverable_dates), length(excluded_dates)
+    ))
+
+    if (length(recoverable_dates) > 0) {
+        cat(sprintf("     Recoverable dates: %s\n",
+            paste(sort(recoverable_dates), collapse = ", ")))
+        cat(sprintf("     Source files found: %d\n", length(recoverable_files)))
+    }
+
+    if (length(unrecoverable_dates) > 0) {
+        cat(sprintf("     Unrecoverable dates (no source files): %s\n",
+            paste(sort(unrecoverable_dates), collapse = ", ")))
+    }
+}
+
+# -- Summary table -------------------------------------------------------------
+cat("\n--- Backfill Summary ---\n")
+summary_rows <- do.call(rbind, lapply(names(backfill_summary), function(tbl) {
+    s <- backfill_summary[[tbl]]
+    data.frame(
+        table         = tbl,
+        actionable    = s$actionable,
+        recoverable   = s$recoverable,
+        unrecoverable = s$unrecoverable,
+        excluded      = s$excluded,
+        stringsAsFactors = FALSE
+    )
+}))
+print(summary_rows, row.names = FALSE)
+
+# -- Upstream recovery request list --------------------------------------------
+all_unrecoverable <- do.call(rbind, lapply(names(backfill_summary), function(tbl) {
+    s <- backfill_summary[[tbl]]
+    if (length(s$unrecoverable_dates) > 0) {
+        data.frame(
+            table = tbl,
+            missing_date = as.character(sort(s$unrecoverable_dates)),
+            day_of_week  = weekdays(sort(s$unrecoverable_dates)),
+            stringsAsFactors = FALSE
+        )
+    } else {
+        NULL
+    }
+}))
+
+if (!is.null(all_unrecoverable) && nrow(all_unrecoverable) > 0) {
+    cat(sprintf(
+        "\n--- Upstream Recovery Request (%d dates across %d tables) ---\n",
+        nrow(all_unrecoverable),
+        length(unique(all_unrecoverable$table))
+    ))
+    cat("Share this list with the Data Factory / API team:\n\n")
+    print(all_unrecoverable, row.names = FALSE)
+} else {
+    cat("\nNo upstream recovery needed — all gaps are either excluded or recoverable.\n")
+}
+
+# -- Re-ingest recoverable files (when not in dry-run mode) --------------------
+tables_with_recoverable <- Filter(
+    function(tbl) {
+        s <- backfill_summary[[tbl]]
+        !is.null(s$recoverable) && s$recoverable > 0
+    },
+    names(backfill_summary)
+)
+
+if (length(tables_with_recoverable) > 0 && !BACKFILL_DRY_RUN) {
+    cat("\n--- Re-ingesting recoverable files ---\n")
+    for (tbl in tables_with_recoverable) {
+        cfg <- table_config[[tbl]]
+        cat(sprintf("\n  Re-ingesting %s...\n", tbl))
+        tryCatch({
+            result <- write_to_delta_incremental(
+                folder       = cfg$folder,
+                pattern      = cfg$pattern,
+                table_name   = tbl,
+                root_pattern = cfg$root_pattern
+            )
+            cat(sprintf("    Result: %s\n", result$status))
+        }, error = function(e) {
+            cat(sprintf("    ERROR: %s\n", conditionMessage(e)))
+        })
+    }
+} else if (length(tables_with_recoverable) > 0 && BACKFILL_DRY_RUN) {
+    cat(sprintf(
+        "\n--- %d table(s) have recoverable files. Set BACKFILL_DRY_RUN <- FALSE to re-ingest. ---\n",
+        length(tables_with_recoverable)
+    ))
+}
+
+cat("\n=== Backfill helper complete ===\n")
