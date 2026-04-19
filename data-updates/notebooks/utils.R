@@ -3,7 +3,7 @@ mirror_date <- "14/02/2025" # can use to freeze versions of dependencies
 options(
   repos = c(
     # Get prepackaged binaries for speed where possible
-    linuxBinaries = paste0("https://packagemanager.posit.co/cran/__linux__/focal/", mirror_date),
+    linuxBinaries = paste0("https://packagemanager.posit.co/cran/__linux__/noble/latest"), # mirror_date),
     fallbackCRAN = "https://cloud.r-project.org"
   )
 )
