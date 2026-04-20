@@ -1,7 +1,7 @@
 # Databricks notebook source
 # DBTITLE 1,Notebook description
 # MAGIC %md
-# MAGIC ## EES Public API - App Table
+# MAGIC ## EES Public API - Service Summary App Table
 # MAGIC
 # MAGIC Creates a single aggregated app-layer table from the raw EES public API data ingested by the `raw_ees_api` notebook.
 # MAGIC
