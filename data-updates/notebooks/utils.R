@@ -14,15 +14,17 @@ install_if_needed <- function(pkg) {
     install.packages("pak")
   }
 
+  pkg_to_install <- packages[!sapply(pkg, requireNamespace, quietly = TRUE)]
+
   ## Handle vectors
-  if (length(pkg) == 1) {
-    if (!requireNamespace(pkg, quietly = TRUE)) {
-      pak::pkg_install(pkg, ask = FALSE)
+  if (length(pkg_to_install) == 1) {
+    if (!requireNamespace(pkg_to_install, quietly = TRUE)) {
+      pak::pkg_install(pkg_to_install, ask = FALSE)
     } else {
-      message("Skipping install... ", pkg, " already installed")
+      message("Skipping install... ", pkg_to_install, " already installed")
     }
-  } else {
-    to_install <- pkg[!sapply(pkg, requireNamespace, quietly = TRUE)]
+  } else if (length(pkg_to_install) > 1) {
+    to_install <- pkg_to_install[!sapply(pkg_to_install, requireNamespace, quietly = TRUE)]
     if (length(to_install) > 0) {
       pak::pkg_install(to_install, ask = FALSE)
     } else {
