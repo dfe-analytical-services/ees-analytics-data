@@ -19,7 +19,7 @@ sc <- spark_connect(method = "databricks")
 # MAGIC %md
 # MAGIC NOTE:
 # MAGIC We originally thought the 'Publication and Subject chosen event tracked the firs ttwo steps of the table tool only and 'Table Created' was tracking the final create table button (so successful journies through table tool). This doesn't seem to be the case as the numbers are suspiciously similar across the two categories (exactly the same in most cases).
-# MAGIC Current working assumption is they both trigger when a table is displayed, but the 'Publication and Sugbject' chosen event logs more information.
+# MAGIC Current working assumption is they both trigger when a table is displayed, but the 'Publication and Subject' chosen event logs more information.
 # MAGIC I'll use the Publication and Subject chosen event here.
 # MAGIC
 # MAGIC For table creation via table tool events in GA4 we need:
@@ -48,7 +48,7 @@ sc <- spark_connect(method = "databricks")
 
 ## I've done this with a group by because otherwise the tests would fail because of duplicates. This could mean I'm just double counting on the day overlap between the two tables - but would need to investigate more to find out.
 
-full_data <- sparklyr::sdf_sql(
+tables_created <- sparklyr::sdf_sql(
   sc, paste("
     SELECT
       date,
@@ -76,15 +76,12 @@ full_data <- sparklyr::sdf_sql(
       eventCount
       FROM ", ga4_event_table_name, "
     ) AS p
+    WHERE eventName = 'Publication and Subject Chosen'
     GROUP BY date, pagePath, eventName, eventLabel, eventCategory
-    ORDER BY date DESC
+    ORDER BY date DESC 
   ")
 ) %>% collect()
 
-tables_created <- full_data %>%
-  filter(
-    eventName %in% c("Publication and Subject Chosen")
-  )
 
 
 # COMMAND ----------
@@ -93,6 +90,16 @@ tables_created <- full_data %>%
 test_that("No duplicate rows", {
   expect_true(nrow(tables_created) == nrow(dplyr::distinct(tables_created)))
 })
+
+test_that("No rows where eventName != required event", {
+  non_event <- tables_created |>
+  dplyr::filter(eventName != 'Publication and Subject Chosen')
+  if (nrow(non_event) > 0) {
+    print(non_event |> dplyr::pull(eventName) |> unique())
+  }
+  expect_true(nrow(non_event) == 0)
+})
+
 
 test_that("Data has no missing values", {
   expect_false(any(is.na(tables_created)))
@@ -123,7 +130,12 @@ tables_created <- tables_created %>%
 # COMMAND ----------
 
 test_that("There are no events without a page type classification", {
-  expect_true(nrow(tables_created %>% filter(page_type == "NA")) == 0)
+  page_type_na <- tables_created %>% filter(page_type == "NA") |> distinct()
+  if (nrow(page_type_na) > 0){
+    print(page_type_na |> dplyr::pull(eventName) |> unique())
+    print(page_type_na |> dplyr::select(pagePath, eventCategory, eventName))
+  }
+  expect_true(nrow(page_type_na) == 0)
 })
 
 # COMMAND ----------
