@@ -1,4 +1,6 @@
 # Databricks notebook source
+update.packages(ask = FALSE)
+
 source("utils.R")
 
 packages <- c(
