@@ -1,6 +1,4 @@
 # Databricks notebook source
-update.packages(ask = FALSE)
-
 source("utils.R")
 
 packages <- c(
@@ -13,7 +11,10 @@ packages <- c(
   "arrow"
 )
 
+# Install any missing pacakges
 install_if_needed(packages)
+
+# Load the packages
 lapply(packages, library, character.only = TRUE)
 
 legacy_table <- "catalog_40_copper_statistics_services.analytics_raw.ees_legacy_scrape"

@@ -9,28 +9,28 @@ options(
 )
 
 # Function to use pak to install packages that aren't already installed
-install_if_needed <- function(pkg) {
-  if (!requireNamespace("pak", quietly = TRUE)) {
+install_if_needed <- function(packages) {
+  print(rownames(installed.packages()) |> sort() |> unique())
+
+  if (!("pak" %in% rownames(installed.packages()))) {
     install.packages("pak")
   }
 
-  pkg_to_install <- packages[!sapply(pkg, requireNamespace, quietly = TRUE)]
+existing_packages <- intersect(packages, rownames(installed.packages()))
+message(
+  "Packages already installed:\n",
+  paste(existing_packages, collapse = ", ")
+)
 
-  ## Handle vectors
-  if (length(pkg_to_install) == 1) {
-    if (!requireNamespace(pkg_to_install, quietly = TRUE)) {
-      pak::pkg_install(pkg_to_install, ask = FALSE)
-    } else {
-      message("Skipping install... ", pkg_to_install, " already installed")
-    }
-  } else if (length(pkg_to_install) > 1) {
-    to_install <- pkg_to_install[!sapply(pkg_to_install, requireNamespace, quietly = TRUE)]
-    if (length(to_install) > 0) {
-      pak::pkg_install(to_install, ask = FALSE)
-    } else {
-      message("Skipping install... all packages already installed")
-    }
-  }
+missing_packages <- setdiff(packages, rownames(installed.packages()))
+
+if (length(missing_packages) > 0){
+  message(
+  "Packages not found:\n",
+  paste(missing_packages, collapse = ",")
+)
+  message("Installing...")
+  pak::pak(missing_packages)}
 }
 
 auth_path <- "/Volumes/catalog_40_copper_statistics_services/analytics_raw/auth/ees-analytics-c5875719e665.json"
