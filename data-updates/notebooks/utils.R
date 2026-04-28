@@ -29,7 +29,13 @@ if (length(missing_packages) > 0){
   "Packages not found:\n",
   paste(missing_packages, collapse = ",")
 )
-  message("Installing...")
+  message(
+    "Note that packages installed here are for this notebook only (i.e. notebook-scoped).\n",
+    "To install packages for all notebooks in this pipeline, and avoid each notebook installing ", 
+    "packages afresh, you'll need to set up compute-scoped package installs. You can do this by ",
+    "following the guidance at https://docs.databricks.com/aws/en/libraries/cluster-libraries."
+  )
+  message("Installing packages...")
   pak::pak(missing_packages)}
 }
 
