@@ -9,8 +9,11 @@ options(
 )
 
 # Function to use pak to install packages that aren't already installed
-install_if_needed <- function(packages) {
-  print(rownames(installed.packages()) |> sort() |> unique())
+install_if_needed <- function(packages, debug = FALSE) {
+  if(debug){
+    message("Currently installed pacakges:")
+    print(rownames(installed.packages()) |> sort() |> unique())
+  }
 
   if (!("pak" %in% rownames(installed.packages()))) {
     install.packages("pak")
