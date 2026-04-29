@@ -98,6 +98,7 @@ full_data <- sparklyr::sdf_sql(
       eventCategory,
       eventCount
       FROM ", ga4_event_table_name, "
+      WHERE eventName IN ('CSV Download Button Clicked', 'Data Set File Download', 'Download All Data Button Clicked', 'ODS Download Button Clicked', 'Data Set File Download - All', 'Release Page File Downloaded', 'Release Page All Files, Release', 'Data Catalogue Page Selected Files Downl', 'Excel Download Button Clicked', 'Data Catalogue Page Selected Files Download', 'Release Page All Files Downloaded') OR eventName LIKE 'Release Page All Files downloads.title, Release:%'
     ) AS p
     GROUP BY date, pagePath, eventName, eventLabel, eventCategory
     ORDER BY date DESC

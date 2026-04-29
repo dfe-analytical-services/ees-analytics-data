@@ -72,6 +72,7 @@ full_data <- sparklyr::sdf_sql(
       eventCategory,
       eventCount
       FROM ", ga4_event_table_name, "
+      WHERE eventName IN ('Clicked to View Featured Table')
     ) AS p
     GROUP BY date, pagePath, eventName, eventLabel, eventCategory
     ORDER BY date DESC

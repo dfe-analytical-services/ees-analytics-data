@@ -88,13 +88,15 @@ full_data <- sparklyr::sdf_sql(
       eventCategory,
       eventCount
       FROM ", ga4_event_table_name, "
+      WHERE eventName IN ('PageSearchForm', 'Publications Filtered by Search', 'Data Sets Filtered by searchTerm')
     ) AS p
     GROUP BY date, pagePath, eventName, eventLabel, eventCategory
     ORDER BY date DESC
   ")
 ) %>% collect()
 
-search_events <- full_data %>% filter(eventName %in% c("PageSearchForm", "Publications Filtered by Search", "Data Sets Filtered by searchTerm"))
+search_events <- full_data %>% 
+  filter(eventName %in% c("PageSearchForm", "Publications Filtered by Search", "Data Sets Filtered by searchTerm"))
 
 
 # COMMAND ----------
