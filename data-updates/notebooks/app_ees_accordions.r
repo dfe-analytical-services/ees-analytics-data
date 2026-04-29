@@ -126,6 +126,7 @@ accordion_events <- accordion_events %>%
     str_detect(eventCategory, "Outcomes for Children in Need, Including Children Looked After by Local Authorities in England Relea") ~ "Release page",
     str_detect(eventCategory, "Outcomes for Children in Need, Including Children Looked After by Local Authorities in England Metho") ~ "Methodology",
     str_detect(eventCategory, "Estimate of Additional Children Claiming Free School Meals Following Expansion of Eligibility Releas") ~ "Release page", # this publication has a methodology accordion but no separate methodology page
+    str_detect(eventCategory, "September Guarantee: Offers of Education and Training for Young People Age 16 and 17 Release") ~ "Release page",
     ## Service pages that have / did have accordions, might be helpful to look at but not main focus
     str_detect(eventCategory, "Methodologies") ~ "Methodology navigation",
     str_detect(eventCategory, "Find Statistics and Data") ~ "Find stats navigation",
