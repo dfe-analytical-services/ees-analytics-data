@@ -80,8 +80,8 @@ full_data <- sparklyr::sdf_sql(
       eventCount
       FROM ", ga4_event_table_name, "
     ) AS p
-    GROUP BY date, pagePath, eventName, eventLabel, eventCategory
     WHERE eventName in ('Content Accordion Opened', 'Accordion Opened', 'Annexes Accordion Opened', 'Data Accordion Opened', 'Publications Accordion Opened', 'Publications+Accordion+Opened')
+    GROUP BY date, pagePath, eventName, eventLabel, eventCategory
     ORDER BY date DESC
   ")
 ) %>% collect()
