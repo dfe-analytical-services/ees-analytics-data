@@ -28,15 +28,11 @@ volume_root <- "/Volumes/catalog_40_copper_statistics_services/statistics_servic
 volume_path <- paste0(volume_root, "public-api/")
 
 # -- Dependencies ------------------------------------------------------------
-
 options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/noble/latest"))
 
-if (!requireNamespace("duckdb", quietly = TRUE)) {
-    install.packages("duckdb")
-}
-if (!requireNamespace("DBI", quietly = TRUE)) {
-    install.packages("DBI")
-}
+source("utils.R")
+install_duckdb()
+install_if_needed("DBI")
 
 library(sparklyr)
 library(dplyr)
