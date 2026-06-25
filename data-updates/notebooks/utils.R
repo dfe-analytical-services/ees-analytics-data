@@ -8,6 +8,23 @@ options(
   )
 )
 
+install_duckdb <- function(){
+  if (!("duckdb" %in% rownames(installed.packages()))) {
+    message("Installing duckdb")
+    install.packages(
+      "duckdb", 
+      repos = sprintf(
+        "https://p3m.dev/cran/latest/bin/linux/manylinux_2_28-%s/%s", 
+        R.version["arch"], 
+        substr(getRversion(), 1, 3)
+      )
+    )
+    message("duckdb installed")
+  } else {
+    message("duckdb already installed")
+  }
+}
+
 # Function to use pak to install packages that aren't already installed
 install_if_needed <- function(packages, debug = FALSE) {
   if(debug){
