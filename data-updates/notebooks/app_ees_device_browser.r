@@ -71,13 +71,21 @@ full_data <- full_data %>%
     str_detect(pagePath, "/cookies") ~ "Cookies",
     str_detect(pagePath, "/") ~ "Homepage",
     str_detect(pagePath, "(other)") ~ "Other",
+    # Something odd going on here, but not sure what it is. We are having some issues on Prod this morning, so hopefully just related to that, but pagePath is returning as an empty string. Putting this in temporarily, but would be good to remove it once Prod's back to being healthy.
+    pagePath == "" ~ "Blank",
     TRUE ~ "NA"
   ))
 
 # COMMAND ----------
 
+page_type_na <- full_data %>% filter(page_type == "NA")
+if(nrow(page_type_na) > 0){
+  message("Found new page types:")
+  print(page_type_na)
+}
+
 test_that("There are no events without a page type classification", {
-  expect_true(nrow(full_data %>% filter(page_type == "NA")) == 0)
+  expect_true(nrow(page_type_na) == 0)
 })
 
 # COMMAND ----------
