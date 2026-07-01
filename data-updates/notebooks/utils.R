@@ -184,3 +184,28 @@ get_publication_title <- function(pub_slug) {
   )
   return(output)
 }
+
+assign_page_type <- function(analytics_data){
+  analytics_data |>
+  mutate(page_type = case_when(
+    str_detect(pagePath, "/data-guidance") ~ "Data guidance",
+    str_detect(pagePath, "/prerelease-access-list") ~ "Pre-release access",
+    str_detect(pagePath, "/find-statistics/") ~ "Release page",
+    str_detect(pagePath, "/find-statistics") ~ "Find stats navigation",
+    str_detect(pagePath, "/data-catalogue/data-set") ~ "Data catalogue dataset",
+    str_detect(pagePath, "/data-catalogue") ~ "Data catalogue navigation",
+    str_detect(pagePath, "/data-tables/permalink") ~ "Permalink",
+    str_detect(pagePath, "/data-tables/") ~ "Table tool",
+    str_detect(pagePath, "/methodology/") ~ "Methodology page",
+    str_detect(pagePath, "/methodology") ~ "Methodology navigation",
+    str_detect(pagePath, "/subscriptions/") ~ "Subscriptions",
+    str_detect(pagePath, "/glossary") ~ "Glossary",
+    str_detect(pagePath, "/cookies") ~ "Cookies",
+    str_detect(pagePath, "/") ~ "Homepage",
+    str_detect(pagePath, "(other)") ~ "Other",
+    # Something odd going on here, but not sure what it is. We are having some issues on Prod this morning, so hopefully just related to that, but pagePath is returning as an empty string. Putting this in temporarily, but would be good to remove it once Prod's back to being healthy.
+    pagePath == "" ~ "Blank",
+    TRUE ~ "NA"
+  ))
+}
+
