@@ -1044,3 +1044,7 @@ if (length(tables_with_recoverable) > 0 && !BACKFILL_DRY_RUN) {
 }
 
 cat("\n=== Backfill helper complete ===\n")
+
+# Clearing the garbage to try and help with memory allocation on the compute
+gc()
+

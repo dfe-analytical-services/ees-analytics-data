@@ -15,6 +15,7 @@ write_publication_table_name <- "catalog_40_copper_statistics_services.analytics
 
 sc <- spark_connect(method = "databricks")
 
+
 # COMMAND ----------
 
 # DBTITLE 1,Read in and check table integrity
@@ -197,6 +198,9 @@ dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_publication_table_name))
 dbExecute(sc, paste0("ALTER TABLE ", write_publication_table_name, "_temp RENAME TO ", write_publication_table_name))
 
 print_changes_summary(temp_publication_table_data, previous_publication_data)
+
+# Clearing the garbage to try and help with memory allocation on the compute
+gc()
 
 # COMMAND ----------
 

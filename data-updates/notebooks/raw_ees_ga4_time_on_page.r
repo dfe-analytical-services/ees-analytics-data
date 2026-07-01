@@ -145,3 +145,6 @@ dbExecute(sc, paste0("DROP TABLE IF EXISTS ", table_name))
 dbExecute(sc, paste0("ALTER TABLE ", table_name, "_temp RENAME TO ", table_name))
 
 print_changes_summary(temp_table_data, previous_data)
+
+# Clearing the garbage to try and help with memory allocation on the compute
+gc()
