@@ -366,3 +366,7 @@ print_changes_summary(temp_publication_table_data, previous_publication_data)
 # MAGIC - **download_type**: Type of download (csv, ods, all files, etc.)
 # MAGIC - **eventLabel**: The info we have for what file was downloaded (this often includes the relevant publication too, though it is truncated unhelpfully)
 # MAGIC - **eventCount**: The number of downloads of that type on a given day
+
+# COMMAND ----------
+
+# consider more stuff in this bit
