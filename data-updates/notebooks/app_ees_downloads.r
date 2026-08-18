@@ -137,7 +137,7 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # DBTITLE 1,Adding a page_type column to help distinguish between different types of download
-downloads <- downloads %>%
+downloads <- downloads  |>
   mutate(page_type = case_when(
     str_detect(eventCategory, "Table Tool") ~ "Table tool",
     str_detect(eventCategory, "Data Catalogue") ~ "Data catalogue",

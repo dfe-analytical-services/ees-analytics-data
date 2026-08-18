@@ -2,6 +2,8 @@
 # DBTITLE 1,Load dependencies
 source("utils.R")
 
+install_duckdb()
+
 packages <- c("sparklyr", "DBI", "testthat", "arrow")
 
 install_if_needed(packages)

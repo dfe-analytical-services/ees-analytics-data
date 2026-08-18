@@ -15,6 +15,7 @@ write_publication_table_name <- "catalog_40_copper_statistics_services.analytics
 
 sc <- spark_connect(method = "databricks")
 
+
 # COMMAND ----------
 
 # DBTITLE 1,Read in and check table integrity
@@ -54,30 +55,19 @@ test_that("There are no missing dates since we started", {
 
 # COMMAND ----------
 
-full_data <- full_data %>%
-  mutate(page_type = case_when(
-    str_detect(pagePath, "/data-guidance") ~ "Data guidance",
-    str_detect(pagePath, "/prerelease-access-list") ~ "Pre-release access",
-    str_detect(pagePath, "/find-statistics/") ~ "Release page",
-    str_detect(pagePath, "/find-statistics") ~ "Find stats navigation",
-    str_detect(pagePath, "/data-catalogue/data-set") ~ "Data catalogue dataset",
-    str_detect(pagePath, "/data-catalogue") ~ "Data catalogue navigation",
-    str_detect(pagePath, "/data-tables/permalink") ~ "Permalink",
-    str_detect(pagePath, "/data-tables/") ~ "Table tool",
-    str_detect(pagePath, "/methodology/") ~ "Methodology page",
-    str_detect(pagePath, "/methodology") ~ "Methodology navigation",
-    str_detect(pagePath, "/subscriptions/") ~ "Subscriptions",
-    str_detect(pagePath, "/glossary") ~ "Glossary",
-    str_detect(pagePath, "/cookies") ~ "Cookies",
-    str_detect(pagePath, "/") ~ "Homepage",
-    str_detect(pagePath, "(other)") ~ "Other",
-    TRUE ~ "NA"
-  ))
+full_data <- full_data  |>
+  assign_page_type()
 
 # COMMAND ----------
 
+page_type_na <- full_data %>% filter(page_type == "NA")
+if(nrow(page_type_na) > 0){
+  message("Found new page types:")
+  print(page_type_na)
+}
+
 test_that("There are no events without a page type classification", {
-  expect_true(nrow(full_data %>% filter(page_type == "NA")) == 0)
+  expect_true(nrow(page_type_na) == 0)
 })
 
 # COMMAND ----------
@@ -189,6 +179,9 @@ dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_publication_table_name))
 dbExecute(sc, paste0("ALTER TABLE ", write_publication_table_name, "_temp RENAME TO ", write_publication_table_name))
 
 print_changes_summary(temp_publication_table_data, previous_publication_data)
+
+# Clearing the garbage to try and help with memory allocation on the compute
+gc()
 
 # COMMAND ----------
 

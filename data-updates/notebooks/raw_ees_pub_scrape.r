@@ -234,3 +234,6 @@ if (!is.null(previous_data)) {
 # Replace the old table with the new one
 dbExecute(sc, paste0("DROP TABLE IF EXISTS ", write_table_name))
 dbExecute(sc, paste0("ALTER TABLE ", write_table_name, "_temp RENAME TO ", write_table_name))
+
+# Clearing the garbage to try and help with memory allocation on the compute
+gc()

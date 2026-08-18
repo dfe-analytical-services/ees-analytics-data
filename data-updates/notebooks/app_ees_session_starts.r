@@ -75,25 +75,8 @@ test_that("There are no missing dates since we started", {
 # COMMAND ----------
 
 # DBTITLE 1,Adding a page_type column to help distinguish between different types of search
-session_starts <- session_starts %>%
-  mutate(page_type = case_when(
-    str_detect(pagePath, "/data-guidance") ~ "Data guidance",
-    str_detect(pagePath, "/prerelease-access-list") ~ "Pre-release access",
-    str_detect(pagePath, "/find-statistics/") ~ "Release page",
-    str_detect(pagePath, "/find-statistics") ~ "Find stats navigation",
-    str_detect(pagePath, "/data-catalogue/data-set") ~ "Data catalogue dataset",
-    str_detect(pagePath, "/data-catalogue") ~ "Data catalogue navigation",
-    str_detect(pagePath, "/data-tables/permalink") ~ "Permalink",
-    str_detect(pagePath, "/data-tables/") ~ "Table tool",
-    str_detect(pagePath, "/methodology/") ~ "Methodology page",
-    str_detect(pagePath, "/methodology") ~ "Methodology navigation",
-    str_detect(pagePath, "/subscriptions/") ~ "Subscriptions",
-    str_detect(pagePath, "/glossary") ~ "Glossary",
-    str_detect(pagePath, "/cookies") ~ "Cookies",
-    str_detect(pagePath, "/") ~ "Homepage",
-    str_detect(pagePath, "(other)") ~ "Other",
-    TRUE ~ "NA"
-  ))
+session_starts <- session_starts |>
+  assign_page_type()
 
 # COMMAND ----------
 
